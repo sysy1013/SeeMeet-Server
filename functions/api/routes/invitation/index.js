@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
 
-router.use('/invitation', require('./invitation'));
+router.get('/list', require('./invitationListGET'));
 
 module.exports = router;
