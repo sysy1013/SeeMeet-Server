@@ -6,7 +6,6 @@ const getALLFriendById = async(client,userId)=>{
         `
         SELECT * FROM "friend"
         WHERE id = $1
-        AND is_deleted = FALSE
         `,
         [userId]
     )
@@ -24,17 +23,29 @@ const searchUser = async(client,email)=>{
     return convertSnakeToCamel.keysToCamel(rows[0]);
 }
 
-const requestAddFriend = async(client,userId,reciver)=>{
+const requestAddFriend = async(client,userId,receiver)=>{
     const { rows } = await client.query(
         `
         INSERT INTO "friend"
-        (sender,reciver)
+        (sender,receiver)
         VALUES
         ($1, $2)
         RETURNING *
         `,
-        [userId,reciver],
+        [userId,receiver],
     )
     return convertSnakeToCamel.keysToCamel(rows[0]);
 };
-module.exports = {getALLFriendById,searchUser,requestAddFriend}
+
+const findreceiver = async(client, email)=>{
+    const {rows} = await client.query(
+        `
+        SELECT id FROM "user" u
+        WHERE email = $1
+        `,
+        [email]
+    );
+    return convertSnakeToCamel.keysToCamel(rows[0]);
+};
+
+module.exports = {getALLFriendById,searchUser,requestAddFriend,findreceiver}
