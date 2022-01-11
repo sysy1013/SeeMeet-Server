@@ -4,19 +4,21 @@ const statusCode = require('../../../constants/statusCode');
 const responseMessage = require('../../../constants/responseMessage');
 const db = require('../../../db/db');
 const { planDB } = require('../../../db');
-
+const jwtHandlers=require('../../../lib/jwtHandlers');
 module.exports = async (req, res) => {
-  let userId=req.get("id");
- 
+  //let userId=req.get("id");
+  const{accesstoken}=req.headers;
   const { month } = req.params;
- // if (!userId) return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, responseMessage.NULL_VALUE));
+  //if (!userId) return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, responseMessage.NULL_VALUE));
 
   let client;
   
   try {
     client = await db.connect(req);
-
-    const plan = await planDB.getMonth(client, userId, month);
+    const decodedToken=jwtHandlers.verify(accesstoken);
+    const userId=decodedToken.id;
+    
+    const plan = await planDB.getMonthPlan(client, userId, parseInt(month));
 
     if (!plan) return res.status(statusCode.NOT_FOUND).send(util.fail(statusCode.NOT_FOUND, responseMessage.NO_POST));
 
