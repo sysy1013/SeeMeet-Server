@@ -93,4 +93,58 @@ const getAllInvitation = async (client, userId) => {
   return converSnakeToCamel.keysToCamel(data);
 };
 
-module.exports = { getAllInvitation };
+const createInvitation = async (client, userId, guestIds, invitationTitle, invitationDesc, date, start, end) => {
+  const { rows } = await client.query(
+    `
+      INSERT INTO "invitation" (host_id, invitation_title, invitation_desc, created_at)
+      VALUES ($1, $2, $3, now())
+      RETURNING *
+      `,
+    [userId, invitationTitle, invitationDesc],
+  );
+
+  const invitationId = rows[0].id;
+  console.log('rows.id' + rows[0].id);
+  const userRows = [];
+  for (let guestId of guestIds) {
+    const { rows } = await client.query(
+      `
+      INSERT INTO "invitation_user_connection" (invitation_id, guest_id)
+      VALUES ($1, $2)
+      `,
+      [invitationId, guestId],
+    );
+
+    const { rows: guestRows } = await client.query(
+      `
+      SELECT id, username FROM "user"
+      WHERE id = $1
+      AND is_deleted = FALSE
+      `,
+      [guestId],
+    );
+    userRows.push(guestRows);
+  }
+
+  const invitationDates = [];
+  for (let i = 0; i < date.length; i++) {
+    let curDate = date[i];
+    let curStart = start[i];
+    let curEnd = end[i];
+    const { rows: dateRows } = await client.query(
+      `
+      INSERT INTO "invitation_date" (invitation_id, "date", "start", "end")
+      VALUES ($1, $2, $3, $4)
+      RETURNING *
+      `,
+      [invitationId, curDate, curStart, curEnd],
+    );
+    invitationDates.push(dateRows);
+  }
+
+  const data = { ...rows[0], guests: userRows, invitationDates: invitationDates };
+
+  return converSnakeToCamel.keysToCamel(data);
+};
+
+module.exports = { getAllInvitation, createInvitation };
