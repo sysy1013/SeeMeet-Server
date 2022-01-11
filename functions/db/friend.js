@@ -10,7 +10,17 @@ const getALLFriendById = async(client,userId)=>{
         `,
         [userId]
     )
-    return convertSnakeToCamel.keysToCamel(rows)
+    return convertSnakeToCamel.keysToCamel(rows);
 }
 
-module.exports = {getALLFriendById}
+const searchUser = async(client,email)=>{
+    const {rows} = await client.query(
+        `
+        SELECT * FROM "user" u
+        WHERE email = $1
+        `,
+        [email]
+    );
+    return convertSnakeToCamel.keysToCamel(rows[0]);
+}
+module.exports = {getALLFriendById,searchUser}
