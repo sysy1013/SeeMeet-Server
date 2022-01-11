@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
 
-router.delete('/:userId',require('./userDELETE'));
+
+router.get('/:month', require('./planMonthGET'));
 module.exports = router;
