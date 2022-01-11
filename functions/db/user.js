@@ -38,4 +38,8 @@ const getUserByIdFirebase= async (client, idFirebase)=>{
     );
     return convertSnakeToCamel.keysToCamel(rows[0]);
 };
+
+const postUserByIdFirebase = async (client)=>{
+    
+}
 module.exports = {deleteUser,addUser,getUserByIdFirebase};
