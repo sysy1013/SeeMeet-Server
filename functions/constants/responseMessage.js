@@ -15,4 +15,7 @@ module.exports = {
 
   // 프로필 조회
   READ_PROFILE_SUCCESS: '프로필 조회 성공',
+
+  //
+  READ_USER_SUCCESS : '유저 조회 성공',
 };

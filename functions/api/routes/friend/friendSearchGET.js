@@ -23,9 +23,11 @@ module.exports = async (req, res) => {
 
     // 빌려온 connection을 사용해 우리가 db/[파일].js에서 미리 정의한 SQL 쿼리문을 날려줍니다.
     const searchUser = await friendDB.searchUser(client,email);
+
+    if(!searchUser) return res.status(statusCode.NOT_FOUND).send(util.fail(statusCode.NOT_FOUND,responseMessage.NO_USER))
     
     // 성공적으로 users를 가져왔다면, response를 보내줍니다.
-    res.status(statusCode.OK).send(util.success(statusCode.OK, responseMessage.READ_ALL_USERS_SUCCESS, searchUser));
+    res.status(statusCode.OK).send(util.success(statusCode.OK, responseMessage.READ_USER_SUCCESS, searchUser));
     
     // try문 안에서 에러가 발생했을 시 catch문으로 error객체가 넘어옵니다.
     // 이 error 객체를 콘솔에 찍어서 어디에 문제가 있는지 알아냅니다.
