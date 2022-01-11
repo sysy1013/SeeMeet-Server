@@ -3,27 +3,25 @@ const util = require('../../../lib/util');
 const statusCode = require('../../../constants/statusCode');
 const responseMessage = require('../../../constants/responseMessage');
 const db = require('../../../db/db');
-const { invitationDB } = require('../../../db');
 const jwtHandlers = require('../../../lib/jwtHandlers');
+const { invitationDB } = require('../../../db');
 
 module.exports = async (req, res) => {
+  const { invitationId } = req.params;
   const { accesstoken } = req.headers;
-  const { guestIds, invitationTitle, invitationDesc, date, start, end } = req.body;
 
-  if (!guestIds || !invitationTitle || !invitationDesc || !date || !start || !end) return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, responseMessage.NULL_VALUE));
-  if (!(date.length == start.length) && !(date.length == end.length)) return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, responseMessage.NULL_VALUE));
+  if (!invitationId) return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, responseMessage.NULL_VALUE));
 
   let client;
+
+  const decodedToken = jwtHandlers.verify(accesstoken);
+  const userId = decodedToken.id;
 
   try {
     client = await db.connect(req);
 
-    const decodedToken = jwtHandlers.verify(accesstoken);
-    const userId = decodedToken.id;
+    const data = await invitationDB.getInvitationById(client, userId, invitationId);
 
-    if (!userId) return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, responseMessage.NULL_VALUE));
-
-    const data = await invitationDB.createInvitation(client, userId, guestIds, invitationTitle, invitationDesc, date, start, end);
     res.status(statusCode.OK).send(util.success(statusCode.OK, responseMessage.READ_ALL_USERS_SUCCESS, data));
   } catch (error) {
     functions.logger.error(`[ERROR] [${req.method.toUpperCase()}] ${req.originalUrl}`, `[CONTENT] ${error}`);

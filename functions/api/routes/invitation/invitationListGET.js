@@ -4,16 +4,19 @@ const statusCode = require('../../../constants/statusCode');
 const responseMessage = require('../../../constants/responseMessage');
 const db = require('../../../db/db');
 const { invitationDB } = require('../../../db');
+const jwtHandlers = require('../../../lib/jwtHandlers');
 
 module.exports = async (req, res) => {
-  const userId = req.get('userId');
-  console.log(userId);
-  if (!userId) return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, responseMessage.NULL_VALUE));
+  const { accesstoken } = req.headers;
 
   let client;
 
   try {
     client = await db.connect(req);
+    const decodedToken = jwtHandlers.verify(accesstoken);
+    const userId = decodedToken.id;
+
+    if (!userId) return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, responseMessage.NULL_VALUE));
 
     const invitations = await invitationDB.getAllInvitation(client, userId);
     const data = { invitations };

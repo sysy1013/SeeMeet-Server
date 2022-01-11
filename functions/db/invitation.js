@@ -147,4 +147,94 @@ const createInvitation = async (client, userId, guestIds, invitationTitle, invit
   return converSnakeToCamel.keysToCamel(data);
 };
 
-module.exports = { getAllInvitation, createInvitation };
+const getInvitationById = async (client, userId, invitationId) => {
+  const { rows } = await client.query(
+    `
+    SELECT * FROM "invitation"
+    WHERE id=$1
+    AND is_deleted=FALSE
+    `,
+    [invitationId],
+  );
+
+  const newRows = converSnakeToCamel.keysToCamel(rows[0]);
+
+  const { rows: hostRows } = await client.query(
+    `
+    SELECT id, username FROM "user"
+    WHERE id = $1
+    AND is_deleted=FALSE
+    `,
+    [userId],
+  );
+  newRows.host = hostRows[0];
+  const hostId = newRows.hostId;
+  delete newRows.hostId;
+
+  //보낸 요청 조회
+  if (hostId == userId) {
+    const { rows: dateRows } = await client.query(
+      `
+      SELECT * FROM "invitation_date"
+      WHERE invitation_id = $1
+      `,
+      [invitationId],
+    );
+
+    for (let row of dateRows) {
+      let dateId = row.id;
+      const { rows: responseRows } = await client.query(
+        `
+        SELECT "user".id, username FROM "invitation_response", "user"
+        WHERE "user".id = invitation_response.guest_id 
+        AND invitation_response.invitation_id=$1 
+        AND invitation_response.invitation_date_id = $2
+        `,
+        [invitationId, dateId],
+      );
+      row.guest = responseRows;
+    }
+
+    const data = { invitation: newRows, invitationDates: dateRows };
+
+    return converSnakeToCamel.keysToCamel(data);
+  } else {
+    //받은 요청 조회
+    const { rows: guestIdRows } = await client.query(
+      `
+      SELECT guest_id FROM "invitation_user_connection"
+      WHERE invitation_id = $1
+      `,
+      [invitationId],
+    );
+
+    const newGuestIdRows = converSnakeToCamel.keysToCamel(guestIdRows);
+    const guests = [];
+
+    for (let row of newGuestIdRows) {
+      const guestId = row.guestId;
+      const { rows: guestRows } = await client.query(
+        `
+          SELECT id, username FROM "user"
+          WHERE id = $1
+          `,
+        [guestId],
+      );
+      guests.push(guestRows[0]);
+    }
+
+    const { rows: dateRows } = await client.query(
+      `
+          SELECT * FROM "invitation_date"
+          WHERE invitation_id = $1
+          `,
+      [invitationId],
+    );
+
+    const data = { invitation: newRows, guests, invitationDates: dateRows };
+
+    return converSnakeToCamel.keysToCamel(data);
+  }
+};
+
+module.exports = { getAllInvitation, createInvitation, getInvitationById };
