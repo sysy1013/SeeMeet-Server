@@ -16,7 +16,7 @@ const deleteUser = async (client,userId)=>{
 const addUser = async(client, email, username,gender,birth,id_Firebase)=>{
     const {rows} = await client.query(
         `
-        INSERT INTO "user" u 
+        INSERT INTO "user" 
         (email,username,gender,birth,id_Firebase)
         VALUES
         ($1, $2, $3, $4, $5)

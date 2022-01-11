@@ -23,4 +23,18 @@ const searchUser = async(client,email)=>{
     );
     return convertSnakeToCamel.keysToCamel(rows[0]);
 }
-module.exports = {getALLFriendById,searchUser}
+
+const requestAddFriend = async(client,userId,reciver)=>{
+    const { rows } = await client.query(
+        `
+        INSERT INTO "friend"
+        (sender,reciver)
+        VALUES
+        ($1, $2)
+        RETURNING *
+        `,
+        [userId,reciver],
+    )
+    return convertSnakeToCamel.keysToCamel(rows[0]);
+};
+module.exports = {getALLFriendById,searchUser,requestAddFriend}

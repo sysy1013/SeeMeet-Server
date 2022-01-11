@@ -18,4 +18,8 @@ module.exports = {
 
   //
   READ_USER_SUCCESS : '유저 조회 성공',
+
+  //친구신청
+  FAIL_ADD_FRIEND : '친구신청 실패',
+  SUCCESS_ADD_FRIEND : '친구신청 성공'
 };
