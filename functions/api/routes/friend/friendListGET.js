@@ -14,8 +14,6 @@ module.exports = async (req, res) => {
   
   let client;
   
-  
-  
   // 에러 트래킹을 위해 try / catch문을 사용합니다.
   // try문 안에서 우리의 로직을 실행합니다.
   try {
