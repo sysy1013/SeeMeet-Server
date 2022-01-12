@@ -5,14 +5,16 @@ const convertSnakeToCamel = require('../lib/convertSnakeToCamel');
 const getALLFriendById = async(client,userId)=>{
     const {rows} = await client.query(
         `
-        SELECT * FROM "friend"
+        SELECT receiver FROM "friend"
         WHERE sender = $1 AND is_deleted=FALSE
         `,
         [userId]
     )
     return convertSnakeToCamel.keysToCamel(rows);
 }
-
+const friendInfo = async(client,userId)=>{
+    const {rows}= await client.query
+}
 //조희의 경우 email을 통해 조회한 email을 통해 user를 검색하는것이기 때문에 아래처럼 작성함.
 const searchUser = async(client,email)=>{
     const {rows} = await client.query(

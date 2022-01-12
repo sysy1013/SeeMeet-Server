@@ -39,7 +39,14 @@ const getUserByIdFirebase= async (client, idFirebase)=>{
     return convertSnakeToCamel.keysToCamel(rows[0]);
 };
 
-const postUserByIdFirebase = async (client)=>{
-    
+const getUserinfoByuserIds = async (client,userIds)=>{
+    const{rows}= await client.query(
+        `
+        SELECT u.id,u.username,u.email FROM "user" u
+        WHERE id IN(${userIds.join()})
+        AND is_deleted = FALSE
+        `,
+    );
+    return convertSnakeToCamel.keysToCamel(rows);
 }
-module.exports = {deleteUser,addUser,getUserByIdFirebase};
+module.exports = {deleteUser,addUser,getUserByIdFirebase,getUserinfoByuserIds};
