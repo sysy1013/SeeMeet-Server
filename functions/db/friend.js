@@ -48,4 +48,17 @@ const findreceiver = async(client, email)=>{
     return convertSnakeToCamel.keysToCamel(rows[0]);
 };
 
-module.exports = {getALLFriendById,searchUser,requestAddFriend,findreceiver}
+const acceptFriend = async(client,userId,rId)=>{
+    const {rows} = await client.query(
+        `
+        UPDATE "friend"
+        SET is_confirm = TRUE, updated_at = now()
+        WHERE receiver = $1 AND sender = $2
+        RETURNING *
+        `,
+        [userId,rId],
+    )
+    return convertSnakeToCamel.keysToCamel(rows[0])
+}
+
+module.exports = {getALLFriendById,searchUser,requestAddFriend,findreceiver,acceptFriend}
