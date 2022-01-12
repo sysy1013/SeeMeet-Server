@@ -3,35 +3,35 @@ const util = require('../../../lib/util');
 const statusCode = require('../../../constants/statusCode');
 const responseMessage = require('../../../constants/responseMessage');
 const db = require('../../../db/db');
+const { friendDB } = require('../../../db');
 const jwtHandlers = require('../../../lib/jwtHandlers');
-const { friendDB, userDB } = require('../../../db');
-
 module.exports = async (req, res) => {
 
     const{accesstoken}=req.headers;
     const {email} = req.body;
+  
   // 필요한 값이 없을 때 보내주는 response
-    if (!accesstoken) return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, responseMessage.NULL_VALUE));
-
-  // 필요한 값이 없을 때 보내주는 response
-    if (!email) return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, responseMessage.NULL_VALUE));
-
-    let client;
+  if (!email) return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, responseMessage.NULL_VALUE));
+  if (!accesstoken) return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, responseMessage.NULL_VALUE));
+  
+  let client;
+  
+  
   // 에러 트래킹을 위해 try / catch문을 사용합니다.
   // try문 안에서 우리의 로직을 실행합니다.
   try {
+    // db/db.js에 정의한 connect 함수를 통해 connection pool에서 connection을 빌려옵니다.
     client = await db.connect(req);
     const decodedToken=jwtHandlers.verify(accesstoken);
     const userId=decodedToken.id;
-
     const receiverId = await friendDB.findreceiver(client,email);
     const rId = receiverId[Object.keys(receiverId)[0]]
+    if(rId === null || !rId) return res.status(statusCode.NOT_FOUND).send(util.fail(statusCode.NOT_FOUND,responseMessage.NO_USER))
 
     // 빌려온 connection을 사용해 우리가 db/[파일].js에서 미리 정의한 SQL 쿼리문을 날려줍니다.
-    const addFriend = await friendDB.requestAddFriend(client,userId,rId);
-    if (!addFriend) return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST,responseMessage.FAIL_ADD_FRIEND)) 
+    const block = await friendDB.blockFriend(client,userId,rId);
     // 성공적으로 users를 가져왔다면, response를 보내줍니다.
-    res.status(statusCode.OK).send(util.success(statusCode.OK, responseMessage.SUCCESS_ADD_FRIEND, addFriend));
+    res.status(statusCode.OK).send(util.success(statusCode.OK, responseMessage.READ_ALL_USERS_SUCCESS, block));
     
     // try문 안에서 에러가 발생했을 시 catch문으로 error객체가 넘어옵니다.
     // 이 error 객체를 콘솔에 찍어서 어디에 문제가 있는지 알아냅니다.
