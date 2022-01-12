@@ -115,7 +115,6 @@ const createInvitation = async (client, userId, guestIds, invitationTitle, invit
   );
 
   const invitationId = rows[0].id;
-  console.log('rows.id' + rows[0].id);
   const userRows = [];
   for (let guestId of guestIds) {
     const { rows } = await client.query(
@@ -295,4 +294,104 @@ const getResponseByUserId = async (client, userId, invitationId) => {
   return converSnakeToCamel.keysToCamel(responseRows);
 };
 
-module.exports = { getAllInvitation, createInvitation, getHostByInvitationId, getGuestByInvitationId, getInvitationSentById, getInvitationReceivedById, getResponseByUserId };
+const confirmInvitation = async (client, host, invitationId, selectGuests, guests, dateId) => {
+  const { rows } = await client.query(
+    `
+    UPDATE "invitation" 
+    SET is_confirmed = true
+    WHERE id = $1
+    AND is_deleted = false
+    RETURNING *
+    `,
+    [invitationId],
+  );
+
+  const newRows = { ...rows[0], host };
+  //1. plan에 추가
+  const { rows: planRows } = await client.query(
+    `
+      INSERT INTO plan (invitation_date_id)
+      VALUES ($1)
+      RETURNING *
+      `,
+    [dateId],
+  );
+
+  const planId = planRows[0].id;
+  //2. plan user connection에 해당 guest 추가
+  for (let guest of selectGuests) {
+    const { rows } = await client.query(
+      `
+      INSERT INTO "plan_user_connection" (user_id, plan_id)
+      VALUES ($1, $2)
+      `,
+      [guest.id, planId],
+    );
+  }
+  //3. plan user connection에 해당 user 추가
+  const { rows: userPlanRows } = await client.query(
+    `
+    INSERT INTO "plan_user_connection" (user_id, plan_id)
+    VALUES ($1, $2)
+    `,
+    [host.id, planId],
+  );
+  //4. invitation에 해당하는 guest 중 해당 dateId에 응답안한 유저는 해당 dateId에 impossible을 추가
+  for (let guest of guests) {
+    const { rows: responseRows } = await client.query(
+      `
+      SELECT * FROM "invitation_response"
+      WHERE guest_id = $1
+      AND invitation_date_id = $2
+      `,
+      [guest.id, dateId],
+    );
+    if (responseRows.length == 0) {
+      const { rows: impossibleUserRows } = await client.query(
+        `
+          INSERT INTO invitation_response (invitation_id, guest_id, invitation_date_id)
+          VALUES ($1, $2, $3)
+        `,
+        [invitationId, guest.id, dateId],
+      );
+    }
+  }
+
+  const { rows: dateRows } = await client.query(
+    `
+    SELECT * FROM invitation_date
+    WHERE id = $1
+    `,
+    [dateId],
+  );
+
+  const newDateRows = { ...dateRows[0], guest: selectGuests };
+
+  return converSnakeToCamel.keysToCamel({ invitation: newRows, invitationDate: newDateRows, plan: planRows[0] });
+};
+
+const cancleInvitation = async (client, invitationId) => {
+  const { rows } = await client.query(
+    `
+    UPDATE "invitation" 
+    SET is_cancled = true
+    WHERE id = $1
+    RETURNING *
+    `,
+    [invitationId],
+  );
+
+  return converSnakeToCamel.keysToCamel(rows[0]);
+};
+
+module.exports = {
+  getAllInvitation,
+  createInvitation,
+  getHostByInvitationId,
+  getGuestByInvitationId,
+  getInvitationSentById,
+  getInvitationReceivedById,
+  getResponseByUserId,
+  confirmInvitation,
+  cancleInvitation,
+};
