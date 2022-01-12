@@ -8,7 +8,7 @@ const jwtHandlers=require('../../../lib/jwtHandlers');
 module.exports = async (req, res) => {
   //let userId=req.get("id");
   const{accesstoken}=req.headers;
-  const { month } = req.params;
+  const { year, month } = req.params;
   //if (!userId) return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, responseMessage.NULL_VALUE));
 
   let client;
@@ -18,7 +18,7 @@ module.exports = async (req, res) => {
     const decodedToken=jwtHandlers.verify(accesstoken);
     const userId=decodedToken.id;
     
-    const plan = await planDB.getMonthPlan(client, userId, parseInt(month));
+    const plan = await planDB.getMonthPlan(client, userId, parseInt(year), parseInt(month));
 
     if (!plan) return res.status(statusCode.NOT_FOUND).send(util.fail(statusCode.NOT_FOUND, responseMessage.NO_POST));
     
