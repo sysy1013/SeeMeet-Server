@@ -20,9 +20,20 @@ module.exports = async (req, res) => {
   try {
     client = await db.connect(req);
 
-    const data = await invitationDB.getInvitationById(client, userId, invitationId);
-
-    res.status(statusCode.OK).send(util.success(statusCode.OK, responseMessage.READ_ALL_USERS_SUCCESS, data));
+    const host = await invitationDB.getHostByInvitationId(client, invitationId);
+    const guests = await invitationDB.getGuestByInvitationId(client, invitationId);
+    if (host.id == userId) {
+      const data = await invitationDB.getInvitationSentById(client, host, guests, invitationId);
+      res.status(statusCode.OK).send(util.success(statusCode.OK, responseMessage.READ_ALL_USERS_SUCCESS, data));
+    } else {
+      const response = await invitationDB.getResponseByUserId(client, userId, invitationId);
+      let isResponse = false;
+      if (response.length > 0) {
+        isResponse = true;
+      }
+      const data = await invitationDB.getInvitationReceivedById(client, userId, invitationId, isResponse);
+      res.status(statusCode.OK).send(util.success(statusCode.OK, responseMessage.READ_ALL_USERS_SUCCESS, { isResponse, ...data, guests }));
+    }
   } catch (error) {
     functions.logger.error(`[ERROR] [${req.method.toUpperCase()}] ${req.originalUrl}`, `[CONTENT] ${error}`);
     console.log(error);
