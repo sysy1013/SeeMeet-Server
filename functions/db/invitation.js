@@ -12,7 +12,7 @@ const getAllInvitation = async (client, userId) => {
         `,
     [userId],
   );
-  console.log(rows);
+  // console.log(rows);
   let newRows;
 
   for (let row of rows) {
@@ -43,7 +43,7 @@ const getAllInvitation = async (client, userId) => {
       values.push(guest[0]);
     }
 
-    console.log(values);
+    // console.log(values);
 
     row.guests = values;
   }
