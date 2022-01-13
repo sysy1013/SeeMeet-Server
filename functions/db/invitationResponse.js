@@ -31,4 +31,17 @@ const responseInvitation = async (client, userId, invitationId, invitationDateId
   return converSnakeToCamel.keysToCamel(responseRows);
 };
 
-module.exports = { responseInvitation };
+const rejectInvitation = async (client, userId, invitationId) => {
+  const { rows } = await client.query(
+    `
+    INSERT INTO "invitation_response" (invitation_id, guest_id, invitation_date_id, impossible)
+    VALUES ($1, $2, NULL, $3)
+    RETURNING id, invitation_id, impossible
+    `,
+    [invitationId, userId, true],
+  );
+
+  return converSnakeToCamel.keysToCamel(rows[0]);
+};
+
+module.exports = { responseInvitation, rejectInvitation };
