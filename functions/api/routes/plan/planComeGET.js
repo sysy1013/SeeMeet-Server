@@ -19,7 +19,11 @@ module.exports = async (req, res) => {
     const userId=decodedToken.id;
     
     const plan = await planDB.get2MonthPlan(client, userId, parseInt(year), parseInt(month));
-    const plan2 = await planDB.get3MonthPlan(client, userId, parseInt(year), parseInt(month)+1);
+    var alpha=parseInt(month)+1
+    if(month==12){
+      alpha=1
+    }
+    const plan2 = await planDB.get3MonthPlan(client, userId, parseInt(year), parseInt(alpha));
 
     const data = [
         ...plan,

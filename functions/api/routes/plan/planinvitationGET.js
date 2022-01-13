@@ -18,8 +18,16 @@ module.exports = async (req, res) => {
     const decodedToken=jwtHandlers.verify(accesstoken);
     const userId=decodedToken.id;
 
+    var beta=parseInt(month)-1
+    if(month==1){
+      beta=12
+    }
     const plan1 = await planDB.get3MonthPlan(client, userId, parseInt(year), parseInt(month-1));
     const plan = await planDB.get3MonthPlan(client, userId, parseInt(year), parseInt(month));
+    var alpha=parseInt(month)+1
+    if(month==12){
+      alpha=1
+    }
     const plan2 = await planDB.get3MonthPlan(client, userId, parseInt(year), parseInt(month)+1);
 
     const data = [
