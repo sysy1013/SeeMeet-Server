@@ -1,6 +1,6 @@
-const admin = require("firebase-admin");
-const serviceAccount = require("./seemeet-700c2-firebase-adminsdk-wxykw-df07d8058e.json");
-const dotenv = require("dotenv");
+const admin = require('firebase-admin');
+const serviceAccount = require('./seemeet-700c2-firebase-adminsdk-wxykw-df07d8058e.json');
+const dotenv = require('dotenv');
 
 dotenv.config();
 
@@ -14,5 +14,5 @@ if (admin.apps.length === 0) {
 }
 
 module.exports = {
-  api: require("./api"),
+  api: require('./api'),
 };

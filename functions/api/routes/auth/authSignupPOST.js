@@ -33,6 +33,8 @@ module.exports = async (req, res) => {
             return res.status(statusCode.NOT_FOUND).json(util.fail(statusCode.NOT_FOUND, '해당 이메일을 가진 유저가 이미 있습니다.'));
         }else if(userFirebase.error.code === 'auth/invalid-password'){
             return res.status(statusCode.NOT_FOUND).json(util.fail(statusCode.NOT_FOUND, ' 비밀번호 형식이 잘못되었습니다. 패스워드는 최소 6자리의 문자열이어야합니다.'));
+        }else if(userFirebase.error.code === 'auth/invalid-email'){
+            return res.status(statusCode.NOT_FOUND).json(util.fail(statusCode.NOT_FOUND,'이메일 형식이 잘못되었습니다.'));
         }else {
             return res.status(statusCode.INTERNAL_SERVER_ERROR).json(util.fail(statusCode.INTERNAL_SERVER_ERROR,responseMessage.INTERNAL_SERVER_ERROR));
         }
