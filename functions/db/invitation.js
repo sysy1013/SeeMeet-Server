@@ -104,7 +104,7 @@ const getAllInvitation = async (client, userId) => {
   return converSnakeToCamel.keysToCamel(data);
 };
 
-const createInvitation = async (client, userId, guestIds, invitationTitle, invitationDesc, date, start, end) => {
+const createInvitation = async (client, userId, guests, invitationTitle, invitationDesc, date, start, end) => {
   const { rows } = await client.query(
     `
       INSERT INTO "invitation" (host_id, invitation_title, invitation_desc, created_at)
@@ -116,13 +116,13 @@ const createInvitation = async (client, userId, guestIds, invitationTitle, invit
 
   const invitationId = rows[0].id;
   const userRows = [];
-  for (let guestId of guestIds) {
+  for (let guest of guests) {
     const { rows } = await client.query(
       `
       INSERT INTO "invitation_user_connection" (invitation_id, guest_id)
       VALUES ($1, $2)
       `,
-      [invitationId, guestId],
+      [invitationId, guest.id],
     );
 
     const { rows: guestRows } = await client.query(
@@ -131,7 +131,7 @@ const createInvitation = async (client, userId, guestIds, invitationTitle, invit
       WHERE id = $1
       AND is_deleted = FALSE
       `,
-      [guestId],
+      [guest.id],
     );
     userRows.push(guestRows);
   }
