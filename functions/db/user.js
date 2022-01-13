@@ -45,6 +45,7 @@ const getUserinfoByuserIds = async (client,userIds)=>{
         SELECT u.id,u.username,u.email FROM "user" u
         WHERE id IN(${userIds.join()})
         AND is_deleted = FALSE
+        ORDER BY username
         `,
     );
     return convertSnakeToCamel.keysToCamel(rows);
