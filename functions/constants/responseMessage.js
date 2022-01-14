@@ -32,4 +32,7 @@ module.exports = {
   ALREADY_CONFIRM: '이미 확정된 약속입니다.',
   INVITATION_CONFIRM_SUCCESS: '약속 확정 성공',
   INVITATION_CANCLE_SUCCESS: '약속 취소 성공',
+
+  //초대장 응답
+  INVITATION_RESPONSE_SUCCESS: '초대장 응답 성공',
 };
