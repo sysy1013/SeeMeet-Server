@@ -24,4 +24,5 @@ module.exports = {
   SUCCESS_ADD_FRIEND : '친구신청 성공',
   ACCEPT_FRIEND : '친구신청 수락',
   REFUSE_FRIEND : '친구신청 거절',
+  EXISTS_FRIEND : '이미 친구입니다.',
 };
