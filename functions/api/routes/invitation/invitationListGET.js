@@ -20,7 +20,7 @@ module.exports = async (req, res) => {
 
     const invitations = await invitationDB.getAllInvitation(client, userId);
     const data = { invitations };
-    res.status(statusCode.OK).send(util.success(statusCode.OK, responseMessage.READ_ALL_USERS_SUCCESS, invitations));
+    res.status(statusCode.OK).send(util.success(statusCode.OK, responseMessage.READ_ALL_INVITATION_SUCCESS, invitations));
   } catch (error) {
     functions.logger.error(`[ERROR] [${req.method.toUpperCase()}] ${req.originalUrl}`, `[CONTENT] ${error}`);
     console.log(error);

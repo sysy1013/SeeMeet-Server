@@ -1,3 +1,4 @@
+const { response } = require('express');
 const _ = require('lodash');
 const { host } = require('../config/dbConfig');
 const converSnakeToCamel = require('../lib/convertSnakeToCamel');
@@ -9,11 +10,10 @@ const getAllInvitation = async (client, userId) => {
             WHERE host_id = $1 
             AND is_deleted = FALSE
             AND is_confirmed = FALSE
+            AND is_cancled = FALSE
         `,
     [userId],
   );
-  // console.log(rows);
-  let newRows;
 
   for (let row of rows) {
     let id = row.id;
@@ -26,25 +26,34 @@ const getAllInvitation = async (client, userId) => {
       [id],
     );
 
-    // console.log(guestRows);
     let values = [];
     for (let r of guestIdRows) {
-      //   console.log(r);
-      let id = r.guest_id;
+      let guestId = r.guest_id;
       const { rows: guest } = await client.query(
         `
                 SELECT id, username FROM "user"
                 WHERE id = $1
                 AND is_deleted = FALSE
             `,
-        [id],
+        [guestId],
       );
 
+      const { rows: responseRows } = await client.query(
+        `
+        SELECT * FROM "invitation_response"
+        WHERE invitation_id = $1
+        AND guest_id = $2
+        `,
+        [id, guestId],
+      );
+
+      if (responseRows > 0) {
+        guest[0].isResponse = true;
+      } else {
+        guest[0].isResponse = false;
+      }
       values.push(guest[0]);
     }
-
-    // console.log(values);
-
     row.guests = values;
   }
 
@@ -53,6 +62,7 @@ const getAllInvitation = async (client, userId) => {
         SELECT id, invitation_title, is_cancled FROM "invitation"
         WHERE host_id = $1
         AND is_confirmed = true
+        OR is_cancled = true
         AND is_deleted = false
       `,
     [userId],
@@ -69,19 +79,51 @@ const getAllInvitation = async (client, userId) => {
       [id],
     );
 
-    // console.log(guestRows);
     let values = [];
     for (let r of guestIdRows) {
-      //   console.log(r);
-      let id = r.guest_id;
+      let guestId = r.guest_id;
       const { rows: guest } = await client.query(
         `
                 SELECT id, username FROM "user"
                 WHERE id = $1
                 AND is_deleted = FALSE
             `,
-        [id],
+        [guestId],
       );
+      const { rows: impossible } = await client.query(
+        `
+        SELECT * FROM "user","invitation_response", "invitation_date", "invitation"
+        WHERE invitation_response.guest_id = $1
+        AND "user".id = invitation_response.guest_id
+        AND invitation.id = $2
+        AND invitation.is_cancled = FALSE
+        AND invitation_date.invitation_id = invitation.id
+        AND invitation_date.id = invitation_response.invitation_date_id
+        AND invitation_response.impossible = TRUE 
+        `,
+        [guestId, id],
+      );
+      if (impossible.length > 0) {
+        guest[0].impossible = true;
+      } else {
+        guest[0].impossible = false;
+      }
+
+      const { rows: ResponseRows } = await client.query(
+        `
+              SELECT * FROM "invitation_response", "invitation", "user"
+              WHERE "invitation".id = $1
+              AND invitation.id ="invitation_response".invitation_id
+              AND guest_id = $2
+              `,
+        [id, guestId],
+      );
+
+      if (ResponseRows.length > 0) {
+        guest[0].isResponse = true;
+      } else {
+        guest[0].isResponse = false;
+      }
 
       values.push(guest[0]);
     }
@@ -96,7 +138,9 @@ const getAllInvitation = async (client, userId) => {
     );
 
     row.guests = values;
-    row.planId = planRows[0].id;
+    if (planRows[0] > 0) {
+      row.planId = planRows[0].id;
+    }
   }
 
   const data = { invitations: rows, confirmedAndCanceld: confirmedRows };
@@ -104,7 +148,7 @@ const getAllInvitation = async (client, userId) => {
   return converSnakeToCamel.keysToCamel(data);
 };
 
-const createInvitation = async (client, userId, guestIds, invitationTitle, invitationDesc, date, start, end) => {
+const createInvitation = async (client, userId, invitationTitle, invitationDesc, date, start, end) => {
   const { rows } = await client.query(
     `
       INSERT INTO "invitation" (host_id, invitation_title, invitation_desc, created_at)
@@ -114,28 +158,12 @@ const createInvitation = async (client, userId, guestIds, invitationTitle, invit
     [userId, invitationTitle, invitationDesc],
   );
 
-  const invitationId = rows[0].id;
-  const userRows = [];
-  for (let guestId of guestIds) {
-    const { rows } = await client.query(
-      `
-      INSERT INTO "invitation_user_connection" (invitation_id, guest_id)
-      VALUES ($1, $2)
-      `,
-      [invitationId, guestId],
-    );
+  const data = { ...rows[0] };
 
-    const { rows: guestRows } = await client.query(
-      `
-      SELECT id, username FROM "user"
-      WHERE id = $1
-      AND is_deleted = FALSE
-      `,
-      [guestId],
-    );
-    userRows.push(guestRows);
-  }
+  return converSnakeToCamel.keysToCamel(data);
+};
 
+const createInvitationDate = async (client, invitationId, date, start, end) => {
   const invitationDates = [];
   for (let i = 0; i < date.length; i++) {
     let curDate = date[i];
@@ -152,7 +180,36 @@ const createInvitation = async (client, userId, guestIds, invitationTitle, invit
     invitationDates.push(dateRows);
   }
 
-  const data = { ...rows[0], guests: userRows, invitationDates: invitationDates };
+  return converSnakeToCamel.keysToCamel(invitationDates);
+};
+
+const createInvitationUserConnection = async (client, invitationId, guests) => {
+  const data = [];
+  for (let guest of guests) {
+    const { rows: userRows } = await client.query(
+      `
+      SELECT * FROM "user"
+      WHERE id = $1
+      AND is_deleted = FALSE
+      `,
+      [guest.id],
+    );
+
+    if (userRows.length < 1) {
+      return [];
+    }
+
+    const { rows } = await client.query(
+      `
+      INSERT INTO "invitation_user_connection" (invitation_id, guest_id)
+      VALUES ($1, $2)
+      RETURNING id, invitation_id, guest_id
+      `,
+      [invitationId, guest.id],
+    );
+
+    data.push(rows[0]);
+  }
 
   return converSnakeToCamel.keysToCamel(data);
 };
@@ -349,8 +406,8 @@ const confirmInvitation = async (client, host, invitationId, selectGuests, guest
     if (responseRows.length == 0) {
       const { rows: impossibleUserRows } = await client.query(
         `
-          INSERT INTO invitation_response (invitation_id, guest_id, invitation_date_id)
-          VALUES ($1, $2, $3)
+          INSERT INTO invitation_response (invitation_id, guest_id, invitation_date_id, impossible)
+          VALUES ($1, $2, $3, true)
         `,
         [invitationId, guest.id, dateId],
       );
@@ -384,9 +441,23 @@ const cancleInvitation = async (client, invitationId) => {
   return converSnakeToCamel.keysToCamel(rows[0]);
 };
 
+const getInvitationById = async (client, invitationId) => {
+  const { rows } = await client.query(
+    `
+    SELECT * FROM "invitation"
+    WHERE id = $1
+    `,
+    [invitationId],
+  );
+
+  return converSnakeToCamel.keysToCamel(rows[0]);
+};
+
 module.exports = {
   getAllInvitation,
   createInvitation,
+  createInvitationDate,
+  createInvitationUserConnection,
   getHostByInvitationId,
   getGuestByInvitationId,
   getInvitationSentById,
@@ -394,4 +465,5 @@ module.exports = {
   getResponseByUserId,
   confirmInvitation,
   cancleInvitation,
+  getInvitationById,
 };
