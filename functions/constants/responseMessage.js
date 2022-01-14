@@ -27,4 +27,5 @@ module.exports = {
 
   //초대장
   INVITATION_SUCCESS: '초대 성공',
+  READ_ALL_INVITATION_SUCCESS: '초대장 목록 조회 성공',
 };
