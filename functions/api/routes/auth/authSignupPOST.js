@@ -12,14 +12,14 @@ const { stubString } = require('lodash');
 module.exports = async (req, res) => {
 
 
-  const {email, username,gender,birth,password,password_confirm} = req.body
+  const {email, username,gender,birth,password,passwordConfirm} = req.body
   
   // 필요한 값이 없을 때 보내주는 response
-  if (!email || !username || !gender ||!birth ||!password ||!password_confirm) return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, responseMessage.NULL_VALUE));
+  if (!email || !username || !gender ||!birth ||!password ||!passwordConfirm) return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, responseMessage.NULL_VALUE));
 
-  if(password < 8) return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST,responseMessage.PASSWORD_LENGTH_SHORT));
+  if(password.length < 8) return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST,responseMessage.PASSWORD_LENGTH_SHORT));
 
-  if(password != password_confirm) return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST,responseMessage.PASSWORD_IS_NOT_CORRECT))
+  if(password != passwordConfirm) return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST,responseMessage.PASSWORD_IS_NOT_CORRECT))
 
   
   let client;

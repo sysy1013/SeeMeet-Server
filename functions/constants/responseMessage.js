@@ -14,6 +14,7 @@ module.exports = {
   LOGIN_FAIL: '로그인 실패',
   NO_USER: '존재하지 않는 회원입니다.',
   MISS_MATCH_PW: '비밀번호가 맞지 않습니다.',
+  INVALID_EMAIL : '이메일이 유효하지 않습니다.',
 
   // 프로필 조회
   READ_PROFILE_SUCCESS: '프로필 조회 성공',
@@ -21,4 +22,7 @@ module.exports = {
   //유저
   DELETE_USER_SUCCESS : '유저 탈퇴 성공',
   DELETE_USER_FAIL : '유저 탈퇴 실패',
+
+  //서버에러
+  INTERNAL_SERVER_ERROR : '서버 에러',
 };
