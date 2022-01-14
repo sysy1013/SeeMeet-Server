@@ -4,7 +4,7 @@ const statusCode = require('../../../constants/statusCode');
 const responseMessage = require('../../../constants/responseMessage');
 const db = require('../../../db/db');
 const jwtHandlers = require('../../../lib/jwtHandlers');
-const { invitationResponseDB } = require('../../../db');
+const { invitationResponseDB, invitationDB } = require('../../../db');
 
 module.exports = async (req, res) => {
   const { invitationId } = req.params;
@@ -19,8 +19,13 @@ module.exports = async (req, res) => {
 
   try {
     client = await db.connect(req);
+    const invitation = await invitationDB.getInvitationById(client, invitationId);
+    if (!invitation) return res.status(statusCode.NOT_FOUND).send(util.fail(statusCode.NOT_FOUND, responseMessage.NO_INVITATION));
+    if (invitation.isConfirmed || invitation.isCancled) {
+      return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, responseMessage.ALREADY_CONFIRM));
+    }
     const data = await invitationResponseDB.rejectInvitation(client, userId, invitationId);
-    res.status(statusCode.OK).send(util.success(statusCode.OK, responseMessage.READ_ALL_USERS_SUCCESS, data));
+    res.status(statusCode.OK).send(util.success(statusCode.OK, responseMessage.INVITATION_REJECT_SUCCESS, data));
   } catch (error) {
     functions.logger.error(`[ERROR] [${req.method.toUpperCase()}] ${req.originalUrl}`, `[CONTENT] ${error}`);
     console.log(error);

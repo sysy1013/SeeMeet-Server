@@ -35,4 +35,5 @@ module.exports = {
 
   //초대장 응답
   INVITATION_RESPONSE_SUCCESS: '초대장 응답 성공',
+  INVITATION_REJECT_SUCCESS: '초대장 거절 성공',
 };
