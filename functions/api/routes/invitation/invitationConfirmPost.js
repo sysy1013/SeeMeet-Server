@@ -28,7 +28,7 @@ module.exports = async (req, res) => {
     const host = await invitationDB.getHostByInvitationId(client, invitationId);
     const guests = await invitationDB.getGuestByInvitationId(client, invitationId);
     const data = await invitationDB.confirmInvitation(client, host, invitationId, selectGuests, guests, dateId);
-
+    if (!data) return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, responseMessage.INVITATION_CONFIRM_FAIL));
     res.status(statusCode.OK).send(util.success(statusCode.OK, responseMessage.INVITATION_CONFIRM_SUCCESS, data));
   } catch (error) {
     functions.logger.error(`[ERROR] [${req.method.toUpperCase()}] ${req.originalUrl}`, `[CONTENT] ${error}`);

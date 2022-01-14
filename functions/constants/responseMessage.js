@@ -32,8 +32,15 @@ module.exports = {
   ALREADY_CONFIRM: '이미 확정된 약속입니다.',
   INVITATION_CONFIRM_SUCCESS: '약속 확정 성공',
   INVITATION_CANCLE_SUCCESS: '약속 취소 성공',
+  INVITATION_FAIL: '초대장 생성 실패',
+  READ_ALL_INVITATION_FAIL: '초대장 목록 조회 실패',
+  READ_INVITATION_FAIL: '초대장 조회 실패',
+  INVITATION_CONFIRM_FAIL: '약속 확정 실패',
+  INVITATION_CANCLE_FAIL: '약속 취소 실패',
 
   //초대장 응답
   INVITATION_RESPONSE_SUCCESS: '초대장 응답 성공',
   INVITATION_REJECT_SUCCESS: '초대장 거절 성공',
+  INVITATION_RESPONSE_FAIL: '초데징 응답 실패',
+  INVITATION_REJECT_FAIL: '초대장 거절 실패',
 };
