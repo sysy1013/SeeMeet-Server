@@ -17,4 +17,8 @@ module.exports = {
 
   // 프로필 조회
   READ_PROFILE_SUCCESS: '프로필 조회 성공',
+  
+  //유저
+  DELETE_USER_SUCCESS : '유저 탈퇴 성공',
+  DELETE_USER_FAIL : '유저 탈퇴 실패',
 };
