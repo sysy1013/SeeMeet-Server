@@ -441,6 +441,18 @@ const cancleInvitation = async (client, invitationId) => {
   return converSnakeToCamel.keysToCamel(rows[0]);
 };
 
+const getInvitationById = async (client, invitationId) => {
+  const { rows } = await client.query(
+    `
+    SELECT * FROM "invitation"
+    WHERE id = $1
+    `,
+    [invitationId],
+  );
+
+  return converSnakeToCamel.keysToCamel(rows[0]);
+};
+
 module.exports = {
   getAllInvitation,
   createInvitation,
@@ -453,4 +465,5 @@ module.exports = {
   getResponseByUserId,
   confirmInvitation,
   cancleInvitation,
+  getInvitationById,
 };
