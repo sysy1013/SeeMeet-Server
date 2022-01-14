@@ -31,4 +31,5 @@ module.exports = {
   NO_INVITATION: '초대장이 존재하지 않습니다.',
   ALREADY_CONFIRM: '이미 확정된 약속입니다.',
   INVITATION_CONFIRM_SUCCESS: '약속 확정 성공',
+  INVITATION_CANCLE_SUCCESS: '약속 취소 성공',
 };
