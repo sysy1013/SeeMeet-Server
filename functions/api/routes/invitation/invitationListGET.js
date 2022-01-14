@@ -19,8 +19,8 @@ module.exports = async (req, res) => {
     if (!userId) return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, responseMessage.NULL_VALUE));
 
     const invitations = await invitationDB.getAllInvitation(client, userId);
-    const data = { invitations };
-    res.status(statusCode.OK).send(util.success(statusCode.OK, responseMessage.READ_ALL_USERS_SUCCESS, invitations));
+    if (!invitations) return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, responseMessage.READ_ALL_INVITATION_FAIL));
+    res.status(statusCode.OK).send(util.success(statusCode.OK, responseMessage.READ_ALL_INVITATION_SUCCESS, invitations));
   } catch (error) {
     functions.logger.error(`[ERROR] [${req.method.toUpperCase()}] ${req.originalUrl}`, `[CONTENT] ${error}`);
     console.log(error);

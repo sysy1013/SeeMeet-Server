@@ -3,18 +3,16 @@ const util = require('../../../lib/util');
 const statusCode = require('../../../constants/statusCode');
 const responseMessage = require('../../../constants/responseMessage');
 const db = require('../../../db/db');
-const { invitationDB } = require('../../../db');
 const jwtHandlers = require('../../../lib/jwtHandlers');
+const { invitationResponseDB, invitationDB } = require('../../../db');
 
 module.exports = async (req, res) => {
   const { invitationId } = req.params;
-  const { selectGuests, dateId } = req.body;
+  const { invitationDateIds } = req.body;
   const { accesstoken } = req.headers;
-
-  if (!selectGuests || !dateId) return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, responseMessage.NULL_VALUE));
+  if (!invitationId || !invitationDateIds) return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, responseMessage.NULL_VALUE));
 
   let client;
-
   const decodedToken = jwtHandlers.verify(accesstoken);
   const userId = decodedToken.id;
 
@@ -25,11 +23,9 @@ module.exports = async (req, res) => {
     if (invitation.isConfirmed || invitation.isCancled) {
       return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, responseMessage.ALREADY_CONFIRM));
     }
-    const host = await invitationDB.getHostByInvitationId(client, invitationId);
-    const guests = await invitationDB.getGuestByInvitationId(client, invitationId);
-    const data = await invitationDB.confirmInvitation(client, host, invitationId, selectGuests, guests, dateId);
-    if (!data) return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, responseMessage.INVITATION_CONFIRM_FAIL));
-    res.status(statusCode.OK).send(util.success(statusCode.OK, responseMessage.INVITATION_CONFIRM_SUCCESS, data));
+    const data = await invitationResponseDB.responseInvitation(client, userId, invitationId, invitationDateIds);
+    if (!data) return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, responseMessage.INVITATION_RESPONSE_FAIL));
+    res.status(statusCode.OK).send(util.success(statusCode.OK, responseMessage.INVITATION_RESPONSE_SUCCESS, data));
   } catch (error) {
     functions.logger.error(`[ERROR] [${req.method.toUpperCase()}] ${req.originalUrl}`, `[CONTENT] ${error}`);
     console.log(error);
