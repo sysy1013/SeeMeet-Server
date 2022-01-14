@@ -29,7 +29,7 @@ module.exports = async (req, res) => {
     const guests = await invitationDB.getGuestByInvitationId(client, invitationId);
     const data = await invitationDB.confirmInvitation(client, host, invitationId, selectGuests, guests, dateId);
 
-    res.status(statusCode.OK).send(util.success(statusCode.OK, responseMessage.READ_ALL_USERS_SUCCESS, data));
+    res.status(statusCode.OK).send(util.success(statusCode.OK, responseMessage.INVITATION_CONFIRM_SUCCESS, data));
   } catch (error) {
     functions.logger.error(`[ERROR] [${req.method.toUpperCase()}] ${req.originalUrl}`, `[CONTENT] ${error}`);
     console.log(error);

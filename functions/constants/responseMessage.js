@@ -29,5 +29,6 @@ module.exports = {
   INVITATION_SUCCESS: '초대 성공',
   READ_ALL_INVITATION_SUCCESS: '초대장 목록 조회 성공',
   NO_INVITATION: '초대장이 존재하지 않습니다.',
-  ALREADY_CONFIRM: '이미 확정된 초대장입니다.',
+  ALREADY_CONFIRM: '이미 확정된 약속입니다.',
+  INVITATION_CONFIRM_SUCCESS: '약속 확정 성공',
 };
