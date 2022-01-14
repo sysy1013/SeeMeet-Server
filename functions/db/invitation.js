@@ -114,28 +114,12 @@ const createInvitation = async (client, userId, guests, invitationTitle, invitat
     [userId, invitationTitle, invitationDesc],
   );
 
-  const invitationId = rows[0].id;
-  const userRows = [];
-  for (let guest of guests) {
-    const { rows } = await client.query(
-      `
-      INSERT INTO "invitation_user_connection" (invitation_id, guest_id)
-      VALUES ($1, $2)
-      `,
-      [invitationId, guest.id],
-    );
+  const data = { ...rows[0] };
 
-    const { rows: guestRows } = await client.query(
-      `
-      SELECT id, username FROM "user"
-      WHERE id = $1
-      AND is_deleted = FALSE
-      `,
-      [guest.id],
-    );
-    userRows.push(guestRows);
-  }
+  return converSnakeToCamel.keysToCamel(data);
+};
 
+const createInvitationDate = async (client, invitationId, date, start, end) => {
   const invitationDates = [];
   for (let i = 0; i < date.length; i++) {
     let curDate = date[i];
@@ -152,7 +136,36 @@ const createInvitation = async (client, userId, guests, invitationTitle, invitat
     invitationDates.push(dateRows);
   }
 
-  const data = { ...rows[0], guests: userRows, invitationDates: invitationDates };
+  return converSnakeToCamel.keysToCamel(invitationDates);
+};
+
+const createInvitationUserConnection = async (client, invitationId, guests) => {
+  const data = [];
+  for (let guest of guests) {
+    const { rows: userRows } = await client.query(
+      `
+      SELECT * FROM "user"
+      WHERE id = $1
+      AND is_deleted = FALSE
+      `,
+      [guest.id],
+    );
+
+    if (userRows.length < 1) {
+      return [];
+    }
+
+    const { rows } = await client.query(
+      `
+      INSERT INTO "invitation_user_connection" (invitation_id, guest_id)
+      VALUES ($1, $2)
+      RETURNING id, invitation_id, guest_id
+      `,
+      [invitationId, guest.id],
+    );
+
+    data.push(rows[0]);
+  }
 
   return converSnakeToCamel.keysToCamel(data);
 };
@@ -387,6 +400,8 @@ const cancleInvitation = async (client, invitationId) => {
 module.exports = {
   getAllInvitation,
   createInvitation,
+  createInvitationDate,
+  createInvitationUserConnection,
   getHostByInvitationId,
   getGuestByInvitationId,
   getInvitationSentById,
