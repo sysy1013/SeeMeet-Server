@@ -23,7 +23,7 @@ module.exports = async (req, res) => {
 
     if (!userId) return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, responseMessage.NULL_VALUE));
 
-    const invitation = await invitationDB.createInvitation(client, guests, invitationTitle, invitationDesc);
+    const invitation = await invitationDB.createInvitation(client, userId, invitationTitle, invitationDesc);
     const invitationId = invitation.id;
     const userConnection = await invitationDB.createInvitationUserConnection(client, invitationId, guests);
     if (userConnection.length == 0) {
