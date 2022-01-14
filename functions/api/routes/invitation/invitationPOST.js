@@ -8,9 +8,9 @@ const jwtHandlers = require('../../../lib/jwtHandlers');
 
 module.exports = async (req, res) => {
   const { accesstoken } = req.headers;
-  const { guestIds, invitationTitle, invitationDesc, date, start, end } = req.body;
+  const { guests, invitationTitle, invitationDesc, date, start, end } = req.body;
 
-  if (!guestIds || !invitationTitle || !invitationDesc || !date || !start || !end) return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, responseMessage.NULL_VALUE));
+  if (!guests || !invitationTitle || !invitationDesc || !date || !start || !end) return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, responseMessage.NULL_VALUE));
   if (!(date.length == start.length) && !(date.length == end.length)) return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, responseMessage.NULL_VALUE));
 
   let client;
@@ -23,8 +23,14 @@ module.exports = async (req, res) => {
 
     if (!userId) return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, responseMessage.NULL_VALUE));
 
-    const data = await invitationDB.createInvitation(client, userId, guestIds, invitationTitle, invitationDesc, date, start, end);
-    res.status(statusCode.OK).send(util.success(statusCode.OK, responseMessage.READ_ALL_USERS_SUCCESS, data));
+    const invitation = await invitationDB.createInvitation(client, userId, invitationTitle, invitationDesc);
+    const invitationId = invitation.id;
+    const userConnection = await invitationDB.createInvitationUserConnection(client, invitationId, guests);
+    if (userConnection.length == 0) {
+      return res.status(statusCode.NOT_FOUND).send(util.fail(statusCode.NOT_FOUND, responseMessage.NO_USER));
+    }
+    const dates = await invitationDB.createInvitationDate(client, invitationId, date, start, end);
+    res.status(statusCode.OK).send(util.success(statusCode.OK, responseMessage.INVITATION_SUCCESS, { invitation, guests, dates }));
   } catch (error) {
     functions.logger.error(`[ERROR] [${req.method.toUpperCase()}] ${req.originalUrl}`, `[CONTENT] ${error}`);
     console.log(error);

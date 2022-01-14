@@ -17,11 +17,14 @@ module.exports = {
   READ_PROFILE_SUCCESS: '프로필 조회 성공',
 
   //
-  READ_USER_SUCCESS : '유저 조회 성공',
+  READ_USER_SUCCESS: '유저 조회 성공',
 
   //친구신청
-  FAIL_ADD_FRIEND : '친구신청 실패',
-  SUCCESS_ADD_FRIEND : '친구신청 성공',
-  ACCEPT_FRIEND : '친구신청 수락',
-  REFUSE_FRIEND : '친구신청 거절',
+  FAIL_ADD_FRIEND: '친구신청 실패',
+  SUCCESS_ADD_FRIEND: '친구신청 성공',
+  ACCEPT_FRIEND: '친구신청 수락',
+  REFUSE_FRIEND: '친구신청 거절',
+
+  //초대장
+  INVITATION_SUCCESS: '초대 성공',
 };
