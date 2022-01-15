@@ -25,7 +25,7 @@ const responseInvitation = async (client, userId, invitationId, invitationDateId
       [invitationDateId],
     );
 
-    dateRows[0].date = dayjs(dateRows[0].date).format('YYYY-MM-DD');
+    dateRows[0].date = dayjs(dateRows[0].date).format('YYYY.MM.DD');
     rows[0].invitationDate = dateRows[0];
     responseRows.push(rows[0]);
   }
