@@ -1,3 +1,4 @@
+const dayjs = require('dayjs');
 const { response } = require('express');
 const _ = require('lodash');
 const { host } = require('../config/dbConfig');
@@ -177,6 +178,7 @@ const createInvitationDate = async (client, invitationId, date, start, end) => {
       `,
       [invitationId, curDate, curStart, curEnd],
     );
+    dateRows[0].date = dayjs(dateRows[0].date).format('YYYY-MM-DD');
     invitationDates.push(dateRows);
   }
 
@@ -282,13 +284,15 @@ const getInvitationSentById = async (client, host, guests, invitationId) => {
     let dateId = row.id;
     const { rows: responseRows } = await client.query(
       `
-      SELECT "user".id, username FROM "invitation_response", "user"
+      SELECT "user".id, "user".username FROM "invitation_response", "user"
       WHERE "user".id = invitation_response.guest_id 
       AND invitation_response.invitation_id=$1 
       AND invitation_response.invitation_date_id = $2
       `,
       [invitationId, dateId],
     );
+    row.date = dayjs(row.date).format('YYYY-MM-DD');
+    console.log(row.date);
     row.respondent = responseRows;
   }
   const data = { invitation: newRows, invitationDates: dateRows };
@@ -313,6 +317,10 @@ const getInvitationReceivedById = async (client, userId, invitationId, isRespons
     [invitationId],
   );
 
+  for (let row of dateRows) {
+    row.date = dayjs(row.date).format('YYYY-MM-DD');
+  }
+
   const newDateRows = converSnakeToCamel.keysToCamel(dateRows);
 
   if (!isResponse) {
@@ -328,6 +336,7 @@ const getInvitationReceivedById = async (client, userId, invitationId, isRespons
         `,
         [dateId, userId],
       );
+      row.date = dayjs(row.date).format('YYYY-MM-DD');
       if (responseRows.length > 0) {
         row.isSelected = true;
       } else {
@@ -421,6 +430,10 @@ const confirmInvitation = async (client, host, invitationId, selectGuests, guest
     `,
     [dateId],
   );
+
+  for (let row of dateRows) {
+    row.date = dayjs(row.date).format('YYYY-MM-DD');
+  }
 
   const newDateRows = { ...dateRows[0], guest: selectGuests };
 
