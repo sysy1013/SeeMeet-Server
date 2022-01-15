@@ -19,13 +19,17 @@ module.exports = async (req, res) => {
     const userId=decodedToken.id;
     if (!userId) return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, responseMessage.NULL_VALUE));
     const plan = await planDB.get2MonthPlan(client, userId, parseInt(year), parseInt(month));
-    var alpha=parseInt(month)+1
+   
     
-    if(month==12){
-      alpha=1
-    }
-    const plan2 = await planDB.get3MonthPlan(client, userId, parseInt(year), parseInt(alpha));
+    var alpha=year
+    var beta=parseInt(month)+1
 
+    if(beta==13){
+      alpha=parseInt(year)+1
+      beta=1
+    }
+    
+    const plan2 = await planDB.get2MonthPlan(client, userId, parseInt(alpha), parseInt(beta));
     const data = [
         ...plan,
         ...plan2,

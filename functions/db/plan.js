@@ -1,15 +1,16 @@
 const _ = require('lodash');
 const convertSnakeToCamel = require('../lib/convertSnakeToCamel');
+const dayjs = require("dayjs");
 
 const getMonthPlan = async (client, userId, year, month) => {
   const { rows } = await client.query(
     `
-    SELECT plan.id, i.invitation_title, date, start, invitation_date.end
+    SELECT plan.id AS plan_id, i.invitation_title, date, start, invitation_date.end
     FROM plan_user_connection pu, "user" u, plan, invitation_date, invitation i
     WHERE pu.user_id=u.id AND pu.plan_id=plan.id AND invitation_date.id=plan.invitation_date_id 
     AND i.id=invitation_date.invitation_id AND
     pu.user_id=$1 AND EXTRACT(YEAR FROM date)=$2 AND EXTRACT(MONTH FROM date)=$3 AND pu.is_deleted=false
-    
+    ORDER BY date 
     `,
     [userId, year, month],
   );
@@ -23,10 +24,12 @@ const getMonthPlan = async (client, userId, year, month) => {
                 FROM plan_user_connection pu, plan, "user" u
                 WHERE plan.id=pu.plan_id AND plan_id=$1
                 AND pu.user_id=u.id
+
             `,
         [id],
       );
       r.users = user
+      r.date=dayjs(r.date).format('YYYY-MM-DD')
     }
     return convertSnakeToCamel.keysToCamel(rows);
   }; 
@@ -34,16 +37,33 @@ const getMonthPlan = async (client, userId, year, month) => {
   const get2MonthPlan = async (client, userId, year, month) => {
     const { rows } = await client.query(
       `
-      SELECT plan.id, i.invitation_title, date
+      SELECT plan.id AS plan_id, i.invitation_title, date
       FROM plan_user_connection pu, "user" u, plan, invitation_date, invitation i
       WHERE pu.user_id=u.id AND pu.plan_id=plan.id AND invitation_date.id=plan.invitation_date_id 
       AND i.id=invitation_date.invitation_id AND pu.user_id=$1 
       AND EXTRACT(YEAR FROM date)=$2 AND EXTRACT(MONTH FROM date)=$3  
       AND pu.is_deleted=false
       ORDER BY date 
+      
       `,
       [userId, year, month],
     );
+    for (let r of rows) {
+      //   console.log(r);
+      let id = r.plan_id;
+      const { rows: user } = await client.query(
+        `
+                SELECT count(pu.user_id)
+                FROM plan_user_connection pu, plan, "user" u
+                WHERE plan.id=pu.plan_id AND plan_id=$1
+                AND pu.user_id=u.id
+                
+            `,
+        [id],
+      );
+      r.users = user
+      r.date=dayjs(r.date).format('YYYY-MM-DD')
+    }
     return convertSnakeToCamel.keysToCamel(rows);
   };
   
@@ -60,6 +80,9 @@ const getMonthPlan = async (client, userId, year, month) => {
       `,
       [userId, year, month],
     );
+    for(let r of rows){
+      r.date=dayjs(rows.date).format('YYYY-MM-DD')
+    }
     return convertSnakeToCamel.keysToCamel(rows);
   };
 
@@ -74,25 +97,24 @@ const getDetailPlan = async (client,  planId) => {
     `,
     [planId],
   );
-  //let values = [];
-    for (let r of rows) {
-      let id = r.invitationid;
+    //for (let r of rows) {
+      const id=Object.values(rows[0])[1]
+    
+      //let id = r.invitationid;
       const { rows: user } = await client.query(
         `
-                SELECT iu.guest_id AS user_id, u.username
-                FROM invitation_user_connection iu, invitation_response, invitation i, "user" u
-                WHERE i.id=iu.invitation_id AND i.id=invitation_response.invitation_id AND u.id=iu.guest_id
-                AND i.id=$1 AND invitation_response.impossible=true
+                SELECT ir.guest_id AS user_id, u.username
+                FROM invitation_response ir, invitation i, "user" u
+                WHERE i.id=ir.invitation_id AND ir.guest_id=u.id
+                AND ir.invitation_id=$1 AND ir.impossible=true
             `,
         [id],
       );
-      r.impossible = user
-    }
+      rows[0].impossible = user
+    //}
 
-    let values2 = [];
-    for (let r of rows) {
+
       //   console.log(r);
-      let id = r.planid;
 
       const { rows: user2 } = await client.query(
         `
@@ -101,10 +123,10 @@ const getDetailPlan = async (client,  planId) => {
         WHERE plan.id=pu.plan_id AND plan_id=$1
         AND pu.user_id=u.id 
             `,
-        [id],
+        [planId],
       );
-      r.possible = user2
-    }
+      rows[0].possible = user2
+    
    
   return convertSnakeToCamel.keysToCamel(rows[0]);
 }; 
@@ -124,7 +146,7 @@ const getDatePlan = async (client, userId, dateId) => {
 
   const { rows } = await client.query(
     `
-    SELECT i.invitation_title, start, invitation_date.end, plan.id AS planId
+    SELECT i.invitation_title, date, start, invitation_date.end, plan.id AS planId
     FROM invitation_date, invitation i, plan, plan_user_connection pu
     WHERE invitation_date.date=$1 AND i.id=invitation_date.invitation_id AND invitation_date.id=plan.invitation_date_id
     AND pu.plan_id=plan.id AND pu.user_id=$2
@@ -150,6 +172,7 @@ const getDatePlan = async (client, userId, dateId) => {
       [id, userId],
     );
     r.users = user
+    r.date=dayjs(rows.date).format('YYYY.MM.DD')
   }
   return convertSnakeToCamel.keysToCamel(rows);
 };
@@ -165,10 +188,15 @@ const getLastPlan = async (client, userId, date) => {
     `,
     [userId, date],
   );
-  
+
   if(rows.length==0){
     return convertSnakeToCamel.keysToCamel(rows);
   }
+
+  for(let r of rows){
+    r.date=dayjs(rows.date).format('YYYY-MM-DD')
+  }
+
   return convertSnakeToCamel.keysToCamel(rows[rows.length-1]);
 };
 
