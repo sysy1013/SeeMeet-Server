@@ -25,7 +25,10 @@ module.exports = async (req, res) => {
     const userId=decodedToken.id;
 
     const receiverId = await friendDB.findreceiver(client,email);
+
+   
     const rId = receiverId[Object.keys(receiverId)[0]]
+    if(userId == rId) return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST,responseMessage.FAIL_ADD_MYSELF));
 
     // 빌려온 connection을 사용해 우리가 db/[파일].js에서 미리 정의한 SQL 쿼리문을 날려줍니다.
     const addFriend = await friendDB.requestAddFriend(client,userId,rId);

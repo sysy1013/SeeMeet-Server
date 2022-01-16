@@ -27,6 +27,7 @@ module.exports = {
   SUCCESS_ADD_FRIEND: '친구신청 성공',
   ACCEPT_FRIEND: '친구신청 수락',
   REFUSE_FRIEND: '친구신청 거절',
+  FAIL_ADD_MYSELF : '자기 자신은 친구 신청을 할 수 없습니다.',
 
   //초대장
   INVITATION_SUCCESS: '초대 성공',
