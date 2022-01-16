@@ -1,3 +1,4 @@
+const dayjs = require('dayjs');
 const _ = require('lodash');
 const converSnakeToCamel = require('../lib/convertSnakeToCamel');
 
@@ -24,6 +25,7 @@ const responseInvitation = async (client, userId, invitationId, invitationDateId
       [invitationDateId],
     );
 
+    dateRows[0].date = dayjs(dateRows[0].date).format('YYYY.MM.DD');
     rows[0].invitationDate = dateRows[0];
     responseRows.push(rows[0]);
   }
