@@ -3,7 +3,7 @@ const util = require('../../../lib/util');
 const statusCode = require('../../../constants/statusCode');
 const responseMessage = require('../../../constants/responseMessage');
 const db = require('../../../db/db');
-const { userDB } = require('../../../db');
+const { userDB, friendDB } = require('../../../db');
 const jwtHandlers = require('../../../lib/jwtHandlers');
 
 module.exports = async (req, res) => {
@@ -22,10 +22,12 @@ module.exports = async (req, res) => {
     const decodedToken=jwtHandlers.verify(accesstoken);
     const userId=decodedToken.id;
 
+    const friendDelete = await friendDB.changeIsdeleted(client,userId);
     // 빌려온 connection을 사용해 우리가 db/[파일].js에서 미리 정의한 SQL 쿼리문을 날려줍니다.
     const deleteUser = await userDB.deleteUser(client,userId);
     if(!deleteUser) return res.status(statusCode.NOT_FOUND).send(util.fail(statusCode.NOT_FOUND,responseMessage.DELETE_USER_FAIL));
     // 성공적으로 users를 가져왔다면, response를 보내줍니다.
+
     res.status(statusCode.OK).send(util.success(statusCode.OK, responseMessage.DELETE_USER, deleteUser));
     
     // try문 안에서 에러가 발생했을 시 catch문으로 error객체가 넘어옵니다.

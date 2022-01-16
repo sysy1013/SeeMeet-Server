@@ -36,7 +36,7 @@ module.exports = async (req, res) => {
 
     if(userFirebase.err){
         if(userFirebase.error.code === 'auth/email-already-exists'){
-          const checkuser = await userDB.returnUser(client,email);
+          const checkuser = await userDB.returnUser(client,email,username,gender,birth);
           if(!checkuser){
             return res.status(statusCode.NOT_FOUND).json(util.fail(statusCode.NOT_FOUND, '해당 이메일을 가진 유저가 이미 있습니다.'));
           }else{
