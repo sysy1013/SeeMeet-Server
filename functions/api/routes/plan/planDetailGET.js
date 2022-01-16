@@ -9,7 +9,7 @@ module.exports = async (req, res) => {
   //let userId=req.get("id");
   const{accesstoken}=req.headers;
   const { planId } = req.params;
-  //if (!userId) return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, responseMessage.NULL_VALUE));
+  if (!planId) return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, responseMessage.NULL_VALUE));
 
   let client;
   

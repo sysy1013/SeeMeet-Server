@@ -9,7 +9,7 @@ module.exports = async (req, res) => {
   //let userId=req.get("id");
   const{accesstoken}=req.headers;
   const { dateId } = req.params;
-  //if (!userId) return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, responseMessage.NULL_VALUE));
+  if (!dateId) return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, responseMessage.NULL_VALUE));
 
   let client;
   
@@ -17,7 +17,7 @@ module.exports = async (req, res) => {
     client = await db.connect(req);
     const decodedToken=jwtHandlers.verify(accesstoken);
     const userId=decodedToken.id;
-   
+    if (!userId) return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, responseMessage.NULL_VALUE));
     const plan = await planDB.getDatePlan(client, userId, parseInt(dateId));
 
     if (!plan) return res.status(statusCode.NOT_FOUND).send(util.fail(statusCode.NOT_FOUND, responseMessage.NO_POST));
