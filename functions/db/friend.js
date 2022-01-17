@@ -18,7 +18,7 @@ const searchUser = async(client,email)=>{
     const {rows} = await client.query(
         `
         SELECT * FROM "user" u
-        WHERE u.email = $1
+        WHERE u.email = $1 AND u.is_deleted = FALSE
         `,
         [email]
     );
@@ -45,7 +45,7 @@ const findreceiver = async(client, email)=>{
     const {rows} = await client.query(
         `
         SELECT u.id FROM "user" u
-        WHERE u.email = $1
+        WHERE u.email = $1 AND u.is_deleted = false
         `,
         [email]
     );
@@ -93,4 +93,16 @@ const cancelBlockFriend = async (client,userId,rId)=>{
     return convertSnakeToCamel.keysToCamel(rows[0]);
 }
 
-module.exports = {getALLFriendById,searchUser,requestAddFriend,findreceiver,acceptFriend,blockFriend,cancelBlockFriend}
+const changeIsdeleted = async (clinet, userId)=>{
+    const {rows} =await clinet.query(
+        `
+        UPDATE "friend"
+        SET receiver_deleted = True, updated_at = now()
+        WHERE receiver = $1
+        RETURNING *
+        `,
+        [userId],
+    )
+    return convertSnakeToCamel.keysToCamel(rows[0]);
+}
+module.exports = {getALLFriendById,searchUser,requestAddFriend,findreceiver,acceptFriend,blockFriend,cancelBlockFriend,changeIsdeleted}

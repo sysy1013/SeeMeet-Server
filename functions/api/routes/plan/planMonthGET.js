@@ -9,7 +9,8 @@ module.exports = async (req, res) => {
   //let userId=req.get("id");
   const{accesstoken}=req.headers;
   const { year, month } = req.params;
-  //if (!userId) return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, responseMessage.NULL_VALUE));
+
+  if (!year || !month) return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, responseMessage.NULL_VALUE));
 
   let client;
   
@@ -18,6 +19,7 @@ module.exports = async (req, res) => {
     const decodedToken=jwtHandlers.verify(accesstoken);
     const userId=decodedToken.id;
     
+    if (!userId) return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, responseMessage.NULL_VALUE));
     const plan = await planDB.getMonthPlan(client, userId, parseInt(year), parseInt(month));
 
     if (!plan) return res.status(statusCode.NOT_FOUND).send(util.fail(statusCode.NOT_FOUND, responseMessage.NO_POST));

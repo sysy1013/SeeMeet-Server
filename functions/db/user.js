@@ -13,10 +13,22 @@ const deleteUser = async (client, userId) => {
   return convertSnakeToCamel.keysToCamel(rows[0]);
 };
 
+const returnUser = async(client, email,username,gender,birth)=>{
+  const {rows} = await client.query(
+    `UPDATE "user" as u
+      SET is_deleted =false, updated_at = now()
+      WHERE email = $1 AND is_deleted = true AND u.username =$2 AND u.gender = $3 AND u.birth =$4
+      RETURNING *
+    `,
+    [email,username,gender,birth],
+  );
+  return convertSnakeToCamel.keysToCamel(rows[0]);
+};
+
 const addUser = async(client, email, username,gender,birth,id_Firebase)=>{
     const {rows} = await client.query(
         `
-        INSERT INTO "user" 
+        INSERT INTO "user"
         (email,username,gender,birth,id_Firebase)
         VALUES
         ($1, $2, $3, $4, $5)
@@ -50,4 +62,5 @@ const getUserinfoByuserIds = async (client,userIds)=>{
     );
     return convertSnakeToCamel.keysToCamel(rows);
 }
-module.exports = {deleteUser,addUser,getUserByIdFirebase,getUserinfoByuserIds};
+
+module.exports = {deleteUser,addUser,getUserByIdFirebase,getUserinfoByuserIds,returnUser};
