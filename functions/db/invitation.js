@@ -1,5 +1,5 @@
 const dayjs = require('dayjs');
-const { response } = require('express');
+const { response, query } = require('express');
 const _ = require('lodash');
 const { host } = require('../config/dbConfig');
 const converSnakeToCamel = require('../lib/convertSnakeToCamel');
@@ -7,7 +7,7 @@ const converSnakeToCamel = require('../lib/convertSnakeToCamel');
 const getAllInvitation = async (client, userId) => {
   const { rows } = await client.query(
     `
-            SELECT * FROM "invitation" i
+            SELECT * FROM "invitation"
             WHERE host_id = $1 
             AND is_deleted = FALSE
             AND is_confirmed = FALSE
@@ -16,14 +16,28 @@ const getAllInvitation = async (client, userId) => {
     [userId],
   );
 
+  const { rows: guestInvitationRows } = await client.query(
+    `
+      SELECT invitation.* FROM "invitation", "invitation_user_connection"
+      WHERE invitation_user_connection.guest_id = $1
+      AND invitation_user_connection.invitation_id = invitation.id
+      AND invitation.is_deleted = FALSE
+      AND invitation.is_confirmed = FALSE
+      AND invitation.is_cancled = FALSE
+    `,
+    [userId],
+  );
+
+  // console.log(guestInvitationRows);
+
   for (let row of rows) {
     let id = row.id;
 
     const { rows: guestIdRows } = await client.query(
       `
-            SELECT guest_id FROM "invitation_user_connection"
-            WHERE invitation_id = $1
-        `,
+      SELECT guest_id FROM "invitation_user_connection"
+      WHERE invitation_id = $1
+      `,
       [id],
     );
 
@@ -32,19 +46,19 @@ const getAllInvitation = async (client, userId) => {
       let guestId = r.guest_id;
       const { rows: guest } = await client.query(
         `
-                SELECT id, username FROM "user"
-                WHERE id = $1
-                AND is_deleted = FALSE
-            `,
+          SELECT id, username FROM "user"
+          WHERE id = $1
+          AND is_deleted = FALSE
+          `,
         [guestId],
       );
 
       const { rows: responseRows } = await client.query(
         `
-        SELECT * FROM "invitation_response"
-        WHERE invitation_id = $1
-        AND guest_id = $2
-        `,
+            SELECT * FROM "invitation_response"
+            WHERE invitation_id = $1
+            AND guest_id = $2
+            `,
         [id, guestId],
       );
 
@@ -56,15 +70,34 @@ const getAllInvitation = async (client, userId) => {
       values.push(guest[0]);
     }
     row.guests = values;
+    row.isReceived = false;
   }
+
+  for (let row of guestInvitationRows) {
+    const { rows: hostRows } = await client.query(
+      `
+            SELECT id, username FROM "user"
+            WHERE id = $1
+            AND is_deleted = FALSE
+            `,
+      [row.host_id],
+    );
+    row.host = hostRows[0];
+    delete row.host_id;
+    row.isReceived = true;
+  }
+
+  const newRows = _.union(rows, guestInvitationRows);
 
   const { rows: confirmedRows } = await client.query(
     `
-        SELECT id, invitation_title, is_cancled FROM "invitation"
-        WHERE host_id = $1
-        AND is_confirmed = true
-        OR is_cancled = true
-        AND is_deleted = false
+          SELECT invitation.id, invitation.invitation_title, invitation.is_cancled, invitation.is_confirmed FROM "invitation", invitation_user_connection
+          WHERE invitation.host_id = $1
+          OR invitation_user_connection.guest_id = $1
+          AND invitation_user_connection.invitation_id = invitation.id
+          AND invitation.is_confirmed = true
+          OR invitation.is_cancled = true
+        AND invitation.is_deleted = false
       `,
     [userId],
   );
@@ -144,7 +177,7 @@ const getAllInvitation = async (client, userId) => {
     }
   }
 
-  const data = { invitations: rows, confirmedAndCanceld: confirmedRows };
+  const data = { invitations: newRows, confirmedAndCanceld: confirmedRows };
 
   return converSnakeToCamel.keysToCamel(data);
 };
@@ -360,7 +393,7 @@ const getResponseByUserId = async (client, userId, invitationId) => {
   return converSnakeToCamel.keysToCamel(responseRows);
 };
 
-const confirmInvitation = async (client, host, invitationId, selectGuests, guests, dateId) => {
+const confirmInvitation = async (client, host, invitationId, guests, dateId) => {
   const { rows } = await client.query(
     `
     UPDATE "invitation" 
@@ -385,15 +418,27 @@ const confirmInvitation = async (client, host, invitationId, selectGuests, guest
 
   const planId = planRows[0].id;
   //2. plan user connection에 해당 guest 추가
-  for (let guest of selectGuests) {
+  const { rows: guestRows } = await client.query(
+    `
+    SELECT "user".id, "user".username FROM "user", "invitation_date", "invitation_response"
+    WHERE invitation_date.id = $1
+    AND invitation_response.invitation_id = invitation_date.invitation_id
+    AND invitation_response.guest_id = "user".id
+    AND invitation_response.impossible = false
+    `,
+    [dateId],
+  );
+
+  for (let row of guestRows) {
     const { rows } = await client.query(
       `
       INSERT INTO "plan_user_connection" (user_id, plan_id)
       VALUES ($1, $2)
       `,
-      [guest.id, planId],
+      [row.id, planId],
     );
   }
+
   //3. plan user connection에 해당 user 추가
   const { rows: userPlanRows } = await client.query(
     `
@@ -435,7 +480,7 @@ const confirmInvitation = async (client, host, invitationId, selectGuests, guest
     row.date = dayjs(row.date).format('YYYY.MM.DD');
   }
 
-  const newDateRows = { ...dateRows[0], guest: selectGuests };
+  const newDateRows = { ...dateRows[0], guest: guestRows };
 
   return converSnakeToCamel.keysToCamel({ invitation: newRows, invitationDate: newDateRows, plan: planRows[0] });
 };
@@ -466,6 +511,19 @@ const getInvitationById = async (client, invitationId) => {
   return converSnakeToCamel.keysToCamel(rows[0]);
 };
 
+const getInvitationByDateId = async (client, dateId, invitationId) => {
+  const { rows } = await client.query(
+    `
+    SELECT invitation.* FROM "invitation_date","invitation"
+    WHERE invitation_date.id = $1
+    AND invitation_date.invitation_id = $2
+    `,
+    [dateId, invitationId],
+  );
+
+  return converSnakeToCamel.keysToCamel(rows[0]);
+};
+
 module.exports = {
   getAllInvitation,
   createInvitation,
@@ -479,4 +537,5 @@ module.exports = {
   confirmInvitation,
   cancleInvitation,
   getInvitationById,
+  getInvitationByDateId,
 };
