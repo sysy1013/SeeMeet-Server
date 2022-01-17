@@ -6,6 +6,5 @@ router.use('/invitation', require('./invitation'));
 router.use('/invitation-response', require('./invitationResponse'));
 
 router.use('/auth', require('./auth'));
-router.use('/user', require('./user'));
-router.use('/friend', require('./friend'));
+
 module.exports = router;
