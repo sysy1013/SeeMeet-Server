@@ -324,7 +324,7 @@ const getInvitationSentById = async (client, host, guests, invitationId) => {
       `,
       [invitationId, dateId],
     );
-    row.date = dayjs(row.date).format('YYYY-MM-DD');
+    row.date = dayjs(row.date).format('YYYY.MM.DD');
     console.log(row.date);
     row.respondent = responseRows;
   }
@@ -369,7 +369,7 @@ const getInvitationReceivedById = async (client, userId, invitationId, isRespons
         `,
         [dateId, userId],
       );
-      row.date = dayjs(row.date).format('YYYY-MM-DD');
+      row.date = dayjs(row.date).format('YYYY.MM.DD');
       if (responseRows.length > 0) {
         row.isSelected = true;
       } else {
