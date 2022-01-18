@@ -61,7 +61,8 @@ const getMonthPlan = async (client, userId, year, month) => {
             `,
         [id],
       );
-      r.users = user
+      r.count = Object.values(user[0])[0]
+      
       r.date=dayjs(r.date).format('YYYY-MM-DD')
     }
     return convertSnakeToCamel.keysToCamel(rows);
@@ -81,7 +82,7 @@ const getMonthPlan = async (client, userId, year, month) => {
       [userId, year, month],
     );
     for(let r of rows){
-      r.date=dayjs(rows.date).format('YYYY-MM-DD')
+      r.date=dayjs(r.date).format('YYYY-MM-DD')
     }
     return convertSnakeToCamel.keysToCamel(rows);
   };
@@ -194,7 +195,7 @@ const getLastPlan = async (client, userId, date) => {
   }
 
   for(let r of rows){
-    r.date=dayjs(rows.date).format('YYYY-MM-DD')
+    r.date=dayjs(r.date).format('YYYY-MM-DD')
   }
 
   return convertSnakeToCamel.keysToCamel(rows[rows.length-1]);
