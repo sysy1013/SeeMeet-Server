@@ -1,3 +1,4 @@
+const { async } = require('@firebase/util');
 const _ = require('lodash');
 const convertSnakeToCamel = require('../lib/convertSnakeToCamel');
 
@@ -93,8 +94,8 @@ const cancelBlockFriend = async (client,userId,rId)=>{
     return convertSnakeToCamel.keysToCamel(rows[0]);
 }
 
-const changeIsdeleted = async (clinet, userId)=>{
-    const {rows} =await clinet.query(
+const changeIsdeleted = async (client, userId)=>{
+    const {rows} =await client.query(
         `
         UPDATE "friend"
         SET receiver_deleted = True, updated_at = now()
@@ -105,4 +106,15 @@ const changeIsdeleted = async (clinet, userId)=>{
     )
     return convertSnakeToCamel.keysToCamel(rows[0]);
 }
-module.exports = {getALLFriendById,searchUser,requestAddFriend,findreceiver,acceptFriend,blockFriend,cancelBlockFriend,changeIsdeleted}
+
+const existFriend = async(client,id,userId)=>{
+    const {rows} = await client.query(
+        `
+        select * from "friend" 
+        WHERE receiver=$1 AND sender = $2
+        `,
+        [id,userId],
+    )
+    return convertSnakeToCamel.keysToCamel(rows[0]);
+}
+module.exports = {getALLFriendById,searchUser,requestAddFriend,findreceiver,acceptFriend,blockFriend,cancelBlockFriend,changeIsdeleted,existFriend}

@@ -92,11 +92,11 @@ const getAllInvitation = async (client, userId) => {
   const { rows: confirmedRows } = await client.query(
     `
           SELECT invitation.id, invitation.invitation_title, invitation.is_cancled, invitation.is_confirmed FROM "invitation", invitation_user_connection
-          WHERE (invitation.host_id = $1
-          OR invitation_user_connection.guest_id = $1)
+          WHERE invitation.host_id = $1
+          OR invitation_user_connection.guest_id = $1
           AND invitation_user_connection.invitation_id = invitation.id
-          AND (invitation.is_confirmed = true
-          OR invitation.is_cancled = true)
+          AND invitation.is_confirmed = true
+          OR invitation.is_cancled = true
         AND invitation.is_deleted = false
       `,
     [userId],
