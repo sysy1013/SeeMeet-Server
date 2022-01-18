@@ -61,8 +61,7 @@ const getAllInvitation = async (client, userId) => {
             `,
         [id, guestId],
       );
-
-      if (responseRows > 0) {
+      if (responseRows.length > 0) {
         guest[0].isResponse = true;
       } else {
         guest[0].isResponse = false;
@@ -164,7 +163,6 @@ const getAllInvitation = async (client, userId) => {
               `,
         [id, guestId],
       );
-
       if (ResponseRows.length > 0) {
         guest[0].isResponse = true;
       } else {
@@ -418,6 +416,7 @@ const confirmInvitation = async (client, host, invitationId, guests, dateId) => 
   );
 
   const newRows = { ...rows[0], host };
+
   //1. plan에 추가
   const { rows: planRows } = await client.query(
     `
@@ -434,6 +433,7 @@ const confirmInvitation = async (client, host, invitationId, guests, dateId) => 
     `
     SELECT "user".id, "user".username FROM "user", "invitation_date", "invitation_response"
     WHERE invitation_date.id = $1
+    AND invitation_date.id = invitation_response.invitation_date_id
     AND invitation_response.invitation_id = invitation_date.invitation_id
     AND invitation_response.guest_id = "user".id
     AND invitation_response.impossible = false
