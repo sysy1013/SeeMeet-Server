@@ -12,10 +12,10 @@ const { stubString } = require('lodash');
 module.exports = async (req, res) => {
 
 
-  const {email, username,gender,birth,password,passwordConfirm} = req.body
+  const {email, username,password,passwordConfirm} = req.body
   
   // 필요한 값이 없을 때 보내주는 response
-  if (!email || !username || !gender ||!birth ||!password ||!passwordConfirm) return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, responseMessage.NULL_VALUE));
+  if (!email || !username ||!password ||!passwordConfirm) return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, responseMessage.NULL_VALUE));
 
   if(password.length < 8) return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST,responseMessage.PASSWORD_LENGTH_SHORT));
 
@@ -36,7 +36,7 @@ module.exports = async (req, res) => {
 
     if(userFirebase.err){
         if(userFirebase.error.code === 'auth/email-already-exists'){
-          const checkuser = await userDB.returnUser(client,email,username,gender,birth);
+          const checkuser = await userDB.returnUser(client,email);
           if(!checkuser){
             return res.status(statusCode.NOT_FOUND).json(util.fail(statusCode.NOT_FOUND, '해당 이메일을 가진 유저가 이미 있습니다.'));
           }else{
@@ -52,7 +52,7 @@ module.exports = async (req, res) => {
         }
     }
     const id_Firebase = userFirebase.uid;
-    const user = await userDB.addUser(client, email, username, gender,birth, id_Firebase);
+    const user = await userDB.addUser(client, email, username, id_Firebase);
     const {accesstoken} = jwtHandlers.sign(user);
 
     

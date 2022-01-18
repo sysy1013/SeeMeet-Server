@@ -6,7 +6,7 @@ const getALLFriendById = async(client,userId)=>{
     const {rows} = await client.query(
         `
         SELECT receiver FROM "friend"
-        WHERE sender = $1 AND is_deleted=FALSE
+        WHERE sender = $1 AND is_deleted=FALSE 
         `,
         [userId]
     )

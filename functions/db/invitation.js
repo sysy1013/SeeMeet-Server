@@ -91,6 +91,7 @@ const getAllInvitation = async (client, userId) => {
 
   const { rows: confirmedRows } = await client.query(
     `
+
           SELECT id, invitation_title, is_cancled, is_confirmed FROM "invitation"
           WHERE host_id = $1
           AND (invitation.is_confirmed = true
