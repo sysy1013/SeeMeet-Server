@@ -61,8 +61,7 @@ const getAllInvitation = async (client, userId) => {
             `,
         [id, guestId],
       );
-
-      if (responseRows > 0) {
+      if (responseRows.length > 0) {
         guest[0].isResponse = true;
       } else {
         guest[0].isResponse = false;
@@ -91,18 +90,31 @@ const getAllInvitation = async (client, userId) => {
 
   const { rows: confirmedRows } = await client.query(
     `
-          SELECT invitation.id, invitation.invitation_title, invitation.is_cancled, invitation.is_confirmed FROM "invitation", invitation_user_connection
-          WHERE invitation.host_id = $1
-          OR invitation_user_connection.guest_id = $1
-          AND invitation_user_connection.invitation_id = invitation.id
-          AND invitation.is_confirmed = true
-          OR invitation.is_cancled = true
+
+          SELECT id, invitation_title, is_cancled, is_confirmed FROM "invitation"
+          WHERE host_id = $1
+          AND (invitation.is_confirmed = true
+          OR invitation.is_cancled = true)
         AND invitation.is_deleted = false
       `,
     [userId],
   );
 
-  for (let row of confirmedRows) {
+  const { rows: receivedConfirmedRows } = await client.query(
+    `
+    SELECT invitation.id, invitation.invitation_title, invitation.is_cancled, invitation.is_confirmed FROM invitation, invitation_user_connection
+    WHERE invitation_user_connection.invitation_id = invitation.id
+    AND invitation_user_connection.guest_id = $1
+    AND (invitation.is_confirmed = true
+    OR invitation.is_cancled = true)
+    AND invitation.is_deleted = false
+    `,
+    [userId],
+  );
+
+  const newConfirmedRows = _.union(confirmedRows, receivedConfirmedRows);
+
+  for (let row of newConfirmedRows) {
     let id = row.id;
 
     const { rows: guestIdRows } = await client.query(
@@ -152,7 +164,6 @@ const getAllInvitation = async (client, userId) => {
               `,
         [id, guestId],
       );
-
       if (ResponseRows.length > 0) {
         guest[0].isResponse = true;
       } else {
@@ -177,7 +188,7 @@ const getAllInvitation = async (client, userId) => {
     }
   }
 
-  const data = { invitations: newRows, confirmedAndCanceld: confirmedRows };
+  const data = { invitations: newRows, confirmedAndCanceld: newConfirmedRows };
 
   return converSnakeToCamel.keysToCamel(data);
 };
@@ -406,6 +417,7 @@ const confirmInvitation = async (client, host, invitationId, guests, dateId) => 
   );
 
   const newRows = { ...rows[0], host };
+
   //1. plan에 추가
   const { rows: planRows } = await client.query(
     `
@@ -422,6 +434,7 @@ const confirmInvitation = async (client, host, invitationId, guests, dateId) => 
     `
     SELECT "user".id, "user".username FROM "user", "invitation_date", "invitation_response"
     WHERE invitation_date.id = $1
+    AND invitation_date.id = invitation_response.invitation_date_id
     AND invitation_response.invitation_id = invitation_date.invitation_id
     AND invitation_response.guest_id = "user".id
     AND invitation_response.impossible = false
