@@ -8,10 +8,10 @@ const jwtHandlers = require('../../../lib/jwtHandlers');
 
 module.exports = async (req, res) => {
   const { invitationId } = req.params;
-  const { selectGuests, dateId } = req.body;
+  const { dateId } = req.body;
   const { accesstoken } = req.headers;
 
-  if (!selectGuests || !dateId) return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, responseMessage.NULL_VALUE));
+  if (!dateId) return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, responseMessage.NULL_VALUE));
 
   let client;
 
@@ -21,13 +21,15 @@ module.exports = async (req, res) => {
   try {
     client = await db.connect(req);
     const invitation = await invitationDB.getInvitationById(client, invitationId);
+    const invitationByDateId = await invitationDB.getInvitationByDateId(client, dateId, invitationId);
+    if (!invitationByDateId) return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, responseMessage.NO_INVITATION_DATE));
     if (!invitation) return res.status(statusCode.NOT_FOUND).send(util.fail(statusCode.NOT_FOUND, responseMessage.NO_INVITATION));
     if (invitation.isConfirmed || invitation.isCancled) {
       return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, responseMessage.ALREADY_CONFIRM));
     }
     const host = await invitationDB.getHostByInvitationId(client, invitationId);
     const guests = await invitationDB.getGuestByInvitationId(client, invitationId);
-    const data = await invitationDB.confirmInvitation(client, host, invitationId, selectGuests, guests, dateId);
+    const data = await invitationDB.confirmInvitation(client, host, invitationId, guests, dateId);
     if (!data) return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, responseMessage.INVITATION_CONFIRM_FAIL));
     res.status(statusCode.OK).send(util.success(statusCode.OK, responseMessage.INVITATION_CONFIRM_SUCCESS, data));
   } catch (error) {
