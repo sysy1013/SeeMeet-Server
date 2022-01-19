@@ -17,7 +17,7 @@ const getMonthPlan = async (client, userId, year, month) => {
   
     for (let r of rows) {
       //   console.log(r);
-      let id = r.id;
+      let id = r.plan_id;
       const { rows: user } = await client.query(
         `
                 SELECT pu.user_id, u.username
@@ -191,13 +191,12 @@ const getLastPlan = async (client, userId, date) => {
   );
 
   if(rows.length==0){
-    return convertSnakeToCamel.keysToCamel(rows);
+    return {};
   }
 
   for(let r of rows){
     r.date=dayjs(r.date).format('YYYY-MM-DD')
   }
-
   return convertSnakeToCamel.keysToCamel(rows[rows.length-1]);
 };
 
