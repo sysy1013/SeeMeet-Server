@@ -182,7 +182,8 @@ const getAllInvitation = async (client, userId) => {
     );
 
     row.guests = values;
-    if (planRows[0] > 0) {
+
+    if (planRows.length > 0) {
       row.planId = planRows[0].id;
     }
   }
