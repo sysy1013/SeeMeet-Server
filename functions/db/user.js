@@ -29,7 +29,7 @@ const addUser = async(client, email, username,id_Firebase)=>{
     const {rows} = await client.query(
         `
         INSERT INTO "user"
-        (email,username,gender,birth,id_Firebase)
+        (email,username,id_Firebase)
         VALUES
         ($1, $2, $3)
         RETURNING *
