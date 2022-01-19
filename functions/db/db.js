@@ -7,6 +7,7 @@ dotenv.config();
 
 // DB Config (유저, 호스트, DB 이름, 패스워드)를 로딩해줍시다.
 const dbConfig = require('../config/dbConfig');
+const { send } = require('../lib/slack');
 
 // NODE_ENV라는 글로벌 환경변수를 사용해서, 현재 환경이 어떤 '모드'인지 판별해줍시다.
 let devMode = process.env.NODE_ENV === 'development';
@@ -46,6 +47,7 @@ const connect = async (req) => {
           !!req.params && `params ${JSON.stringify(req.params)}`
         }`
       : `request 없음`;
+  await send(string);
   const callStack = new Error().stack;
   const client = await pool.connect();
   const query = client.query;
