@@ -2,9 +2,14 @@
 
 ## ERD ##
 
-![ERD](https://user-images.githubusercontent.com/51692363/148905247-164d468b-5a75-49ff-8dc0-74a52a8d474e.jpg)
+![ERD](https://user-images.githubusercontent.com/69101054/150117506-3930e2fa-c19c-4980-9f92-aff341192d00.PNG)
 
 ---
+## 서비스 핵심 기능 ##
+
+![SeeMeet](https://user-images.githubusercontent.com/69101054/150117966-f6f7ea35-098b-4d9e-b052-b14a7af4f1cc.jpg)
+
+--
 
 ## 팀별 역할 분담 ##
 
@@ -40,8 +45,8 @@
   - 친구 추가
   - 친구 목록 조회
   - 유저 검색
-  - 친구추가 수락
-  - 친구추가 삭제
+  - 친구 차단
+  - 친구 차단 
 
 ---
 
@@ -166,8 +171,28 @@ const getUser = (firstName, LastName) => firstName + LastName
  ┃ ┃ ┃ ┣ 📜authSignupPOST.js
 
  ┃ ┃ ┃ ┣ 📜index.js
+ 
+ ┃ ┃ ┣ 📂friend
+ 
+ ┃ ┃ ┃ ┣ 📜friendAcceptPUT(unuse).js
+  
+ ┃ ┃ ┃ ┣ 📜friendAddPOST.js
+ 
+ ┃ ┃ ┃ ┣ 📜friendBlockPUT.js
+ 
+ ┃ ┃ ┃ ┣ 📜friendCancelBlockPUT.js
+ 
+ ┃ ┃ ┃ ┣ 📜friendListGET.js
+ 
+ ┃ ┃ ┃ ┣ 📜frienSearchGET.js
 
+ ┃ ┃ ┃ ┣ 📜index.js
+ 
  ┃ ┃ ┣ 📂 invitation
+ 
+ ┃ ┃ ┃ ┣ 📜inviataionCanclePUT.js
+ 
+ ┃ ┃ ┃ ┣ 📜inviataionConfirmPost.js
 
  ┃ ┃ ┃ ┣ 📜inviataionGET.js
 
@@ -176,26 +201,44 @@ const getUser = (firstName, LastName) => firstName + LastName
  ┃ ┃ ┃ ┣ 📜inviataionListGET.js
 
  ┃ ┃ ┃ ┣ 📜index.js 
+ 
+ ┃ ┃ ┣ 📂 invitationResponse
+ 
+ ┃ ┃ ┃ ┣ 📜index.js
+ 
+ ┃ ┃ ┃ ┣ 📜invitationRejectPOST.js 
+
+ ┃ ┃ ┃ ┣ 📜invitationResponsePOST.js 
 
  ┃ ┃ ┣ 📂 user
 
-┃ ┃ ┃ ┣ 📜userDELETE.js 
+ ┃ ┃ ┃ ┣ 📜userDELETE.js 
 
-┃ ┃ ┃ ┣ 📜index.js 
+ ┃ ┃ ┃ ┣ 📜index.js 
 
-┃ ┃ ┣ 📂 plan
+ ┃ ┃ ┣ 📂 plan
 
-┃ ┃ ┃ ┣ 📜 planMonthGET.js
+ ┃ ┃ ┃ ┣ 📜 planComeGET.js
 
-┃ ┃ ┃ ┣ 📜index.js 
+ ┃ ┃ ┃ ┣ 📜 planDateGET.js
 
-┃ ┣ 📜index.js
+ ┃ ┃ ┃ ┣ 📜 planDetailGET.js
+
+ ┃ ┃ ┃ ┣ 📜 planinvitationGET.js
+
+ ┃ ┃ ┃ ┣ 📜 planLastGET.js
+
+ ┃ ┃ ┃ ┣ 📜 planMonthGET.js
+
+ ┃ ┃ ┃ ┣ 📜index.js 
+
+ ┃ ┣ 📜index.js
 
 ┣ 📂config
 
  ┃ ┣ 📜dbConfig.js 
 
-┃ ┣ 📜 firebaseClient.js 
+ ┃ ┣ 📜 firebaseClient.js 
 
 ┣ 📂constants
 
@@ -208,7 +251,11 @@ const getUser = (firstName, LastName) => firstName + LastName
  ┣ 📂db
 
  ┃ ┣ 📜db.js
+ 
+ ┃ ┣ 📜friend.js
 
+ ┃ ┣ 📜invitationResponse.js
+ 
  ┃ ┣ 📜invitation.js
 
  ┃ ┣ 📜user.js
@@ -223,7 +270,7 @@ const getUser = (firstName, LastName) => firstName + LastName
 
  ┃ ┣ 📜convertSnakeToCamel.js
 
-┃ ┣ 📜jwtHandlers.js
+ ┃ ┣ 📜jwtHandlers.js
 
  ┣ 📜.eslintrc.js
 
@@ -234,7 +281,49 @@ const getUser = (firstName, LastName) => firstName + LastName
 
 ## API 로직 구현 진척도 ##
 
-#### 현재 구현 API/전체 API = 8/23 ####
+#### 현재 구현 API/전체 API = 21/21 ####
 
-#### 약 33퍼센트 구현 ####
+#### 100퍼센트 구현 ####
+
+
+## dependencies module ##
+```
+{
+  "name": "functions",
+  "description": "Cloud Functions for Firebase",
+  "scripts": {
+    "lint": "eslint .",
+    "serve": "cross-env NODE_ENV=development firebase emulators:start --only functions",
+    "shell": "firebase functions:shell",
+    "start": "npm run shell",
+    "deploy": "cross-env NODE_ENV=production firebase deploy --only functions",
+    "logs": "firebase functions:log"
+  },
+  "engines": {
+    "node": "16"
+  },
+  "main": "index.js",
+  "dependencies": {
+    "cookie-parser": "^1.4.6",
+    "cors": "^2.8.5",
+    "dayjs": "^1.10.7",
+    "dotenv": "^14.1.0",
+    "eslint-config-prettier": "^8.3.0",
+    "express": "^4.17.2",
+    "firebase": "^9.6.3",
+    "firebase-admin": "^9.8.0",
+    "firebase-functions": "^3.14.1",
+    "helmet": "^5.0.1",
+    "hpp": "^0.2.3",
+    "jsonwebtoken": "^8.5.1",
+    "pg": "^8.7.1"
+  },
+  "devDependencies": {
+    "eslint": "^7.6.0",
+    "eslint-config-google": "^0.14.0",
+    "firebase-functions-test": "^0.2.0"
+  },
+  "private": true
+}
+```
 
