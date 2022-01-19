@@ -19,10 +19,10 @@ module.exports = {
   // 프로필 조회
   READ_PROFILE_SUCCESS: '프로필 조회 성공',
 
-  //
+  // 유저 관련
   READ_USER_SUCCESS: '유저 조회 성공',
 
-  //친구신청
+  // 친구신청
   FAIL_ADD_FRIEND : '친구신청 실패',
   SUCCESS_ADD_FRIEND : '친구신청 성공',
   ACCEPT_FRIEND : '친구신청 수락',
