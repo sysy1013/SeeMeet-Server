@@ -39,6 +39,7 @@ module.exports = {
   INVITATION_CANCLE_SUCCESS: '약속 취소 성공',
   INVITATION_FAIL: '초대장 생성 실패',
   READ_ALL_INVITATION_FAIL: '초대장 목록 조회 실패',
+  READ_INVITATION_SUCCESS: '초대장 조회 성공',
   READ_INVITATION_FAIL: '초대장 조회 실패',
   INVITATION_CONFIRM_FAIL: '약속 확정 실패',
   INVITATION_CANCLE_FAIL: '약속 취소 실패',
