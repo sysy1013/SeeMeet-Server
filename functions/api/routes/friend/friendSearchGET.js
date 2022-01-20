@@ -47,7 +47,7 @@ module.exports = async (req, res) => {
     
     if(userId == id) return res.status(statusCode.BAD_REQUEST).send(util.success(statusCode.BAD_REQUEST,'나 자신은 조회 불가',{}));
     const checkFriend = await friendDB.existFriend(client,id,userId);
-    if(!checkFriend){
+    if(checkFriend){
       await send(`userId : ${userId}`);
       return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST,responseMessage.EXISTS_FRIEND));
     }
