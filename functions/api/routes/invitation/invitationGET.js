@@ -30,6 +30,7 @@ module.exports = async (req, res) => {
       return res.status(statusCode.NOT_FOUND).send(util.fail(statusCode.NOT_FOUND, responseMessage.NO_INVITATION));
     }
     const guests = await invitationDB.getGuestByInvitationId(client, invitationId);
+    const newGuests = guests.filter((o) => o.id != userId);
     if (host.id == userId) {
       await send(`host: ${host}\nuserId: ${userId}`);
       const data = await invitationDB.getInvitationSentById(client, host, guests, invitationId);
@@ -43,7 +44,7 @@ module.exports = async (req, res) => {
       }
       const data = await invitationDB.getInvitationReceivedById(client, userId, host, invitationId, isResponse);
       if (!data) return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, responseMessage.READ_INVITATION_FAIL));
-      res.status(statusCode.OK).send(util.success(statusCode.OK, responseMessage.READ_INVITATION_SUCCESS, { isResponse, ...data, guests }));
+      res.status(statusCode.OK).send(util.success(statusCode.OK, responseMessage.READ_INVITATION_SUCCESS, { isResponse, ...data, newGuests }));
     }
   } catch (error) {
     functions.logger.error(`[ERROR] [${req.method.toUpperCase()}] ${req.originalUrl}`, `[CONTENT] ${error}`);
