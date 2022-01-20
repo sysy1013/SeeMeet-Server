@@ -12,9 +12,8 @@ module.exports = async (req, res) => {
   const { accesstoken } = req.headers;
 
   if (!invitationId || !accesstoken) {
-    if (process.env.DEV_NODE === 'development') {
-      await send(`accesstoken: ${accesstoken}\ninvitationId: ${invitationId}`);
-    }
+    await send(`accesstoken: ${accesstoken}\ninvitationId: ${invitationId}`);
+
     return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, responseMessage.NULL_VALUE));
   }
   let client;
@@ -28,18 +27,16 @@ module.exports = async (req, res) => {
     const host = await invitationDB.getHostByInvitationId(client, invitationId);
 
     if (!host) {
-      if (process.env.DEV_NODE === 'development') {
-        await send(`
+      await send(`
         req.originalURL: ${req.originalUrl},
         invitationId: ${invitationId}\nhost: ${host}`);
-      }
+
       return res.status(statusCode.NOT_FOUND).send(util.fail(statusCode.NOT_FOUND, responseMessage.NO_INVITATION));
     }
     const guests = await invitationDB.getGuestByInvitationId(client, invitationId);
     if (host.id == userId) {
-      if (process.env.DEV_NODE === 'development') {
-        await send(`req.originalURL: ${req.originalUrl}\nhost: ${host}\nuserId: ${userId}`);
-      }
+      await send(`req.originalURL: ${req.originalUrl}\nhost: ${host}\nuserId: ${userId}`);
+
       const data = await invitationDB.getInvitationSentById(client, host, guests, invitationId);
       if (!data) return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, responseMessage.READ_INVITATION_FAIL));
       res.status(statusCode.OK).send(util.success(statusCode.OK, responseMessage.READ_INVITATION_SUCCESS, data));
@@ -56,9 +53,8 @@ module.exports = async (req, res) => {
   } catch (error) {
     functions.logger.error(`[ERROR] [${req.method.toUpperCase()}] ${req.originalUrl}`, `[CONTENT] ${error}`);
     console.log(error);
-    if (process.env.DEV_NODE === 'development') {
-      await send(error);
-    }
+    await send(error);
+
     res.status(statusCode.INTERNAL_SERVER_ERROR).send(util.fail(statusCode.INTERNAL_SERVER_ERROR, responseMessage.INTERNAL_SERVER_ERROR));
   } finally {
     client.release();
