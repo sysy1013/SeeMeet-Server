@@ -136,6 +136,9 @@ const getDetailPlan = async (client, planId, userId) => {
             `,
         [planId, userId],
       );
+      for(let r of rows){
+        r.date=dayjs(r.date).format('YYYY-MM-DD')
+      }
       rows[0].possible = user2
     
    
