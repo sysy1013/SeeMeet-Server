@@ -21,6 +21,21 @@ module.exports = async (req, res) => {
   try {
     client = await db.connect(req);
     const invitation = await invitationDB.getInvitationById(client, invitationId);
+    const guests = await invitationDB.getGuestByInvitationId(client, invitationId);
+
+    const guestIds = guests.map(function (value) {
+      return value['id'];
+    });
+
+    if (!guestIds.includes(userId)) {
+      await send(`
+      req.originalURL: ${req.originalUrl}
+      guestsIds: ${guestIds}
+      userId: ${userId}
+      `);
+      return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, '해당 약속에 포함된 게스트가 아닙니다.'));
+    }
+
     if (!invitation) {
       await send(`
       req.originalURL: ${req.originalUrl}
