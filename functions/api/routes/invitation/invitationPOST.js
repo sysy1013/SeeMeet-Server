@@ -3,7 +3,7 @@ const util = require('../../../lib/util');
 const statusCode = require('../../../constants/statusCode');
 const responseMessage = require('../../../constants/responseMessage');
 const db = require('../../../db/db');
-const { invitationDB } = require('../../../db');
+const { invitationDB, userDB } = require('../../../db');
 const jwtHandlers = require('../../../lib/jwtHandlers');
 const { send } = require('../../../lib/slack');
 
@@ -12,9 +12,8 @@ module.exports = async (req, res) => {
   const { guests, invitationTitle, invitationDesc, date, start, end } = req.body;
 
   if (!guests || !invitationTitle || !invitationDesc || !date || !start || !end || !accesstoken) {
-    if (process.env.DEV_NODE === 'develop') {
-      await send(
-        `req.originalURL: ${req.originalUrl}
+    await send(
+      `req.originalURL: ${req.originalUrl}
       guests: ${JSON.stringify(guests)},
       invitationTitle: ${invitationTitle},
       invitationDesc: ${invitationDesc},
@@ -23,8 +22,8 @@ module.exports = async (req, res) => {
       end: ${end},
       accesstoken: ${accesstoken}
         `,
-      );
-    }
+    );
+
     return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, responseMessage.NULL_VALUE));
   }
   if (!(date.length == start.length) && !(date.length == end.length)) {
@@ -37,6 +36,7 @@ module.exports = async (req, res) => {
 
     return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, responseMessage.NULL_VALUE));
   }
+
   let client;
 
   try {
@@ -54,6 +54,18 @@ module.exports = async (req, res) => {
       );
 
       return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, responseMessage.NULL_VALUE));
+    }
+
+    for (let guest of guests) {
+      let user = await userDB.getUserinfoByuserIds(client, [guest.id]);
+      if (user.length == 0) {
+        await send(`
+        req.originalURL: ${req.originalUrl}
+        user: ${user}
+        guest: ${guest.id}
+        `);
+        return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, responseMessage.NO_USER));
+      }
     }
 
     const invitation = await invitationDB.createInvitation(client, userId, invitationTitle, invitationDesc);

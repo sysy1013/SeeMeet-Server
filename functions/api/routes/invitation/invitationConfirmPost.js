@@ -50,6 +50,14 @@ module.exports = async (req, res) => {
       return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, responseMessage.ALREADY_CONFIRM));
     }
     const host = await invitationDB.getHostByInvitationId(client, invitationId);
+    if (host.id != userId) {
+      await send(`
+      req.originalURL: ${req.originalUrl}
+      hostId: ${host.id}
+      userId: ${userId}
+      `);
+      return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, '해당 유저가 보낸 약속이 아닙니다.'));
+    }
     const guests = await invitationDB.getGuestByInvitationId(client, invitationId);
     const data = await invitationDB.confirmInvitation(client, host, invitationId, guests, dateId);
     if (!data) return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, responseMessage.INVITATION_CONFIRM_FAIL));
