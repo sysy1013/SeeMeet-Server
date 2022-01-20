@@ -5,10 +5,11 @@ const responseMessage = require('../../../constants/responseMessage');
 const db = require('../../../db/db');
 const { invitationDB } = require('../../../db');
 const { send } = require('../../../lib/slack');
+const jwtHandlers = require('../../../lib/jwtHandlers');
 
 module.exports = async (req, res) => {
   const { invitationId } = req.params;
-
+  const { accesstoken } = req.headers;
   if (!invitationId) {
     await send(`
       req.originalURL: ${req.originalUrl}
@@ -19,6 +20,8 @@ module.exports = async (req, res) => {
 
   let client;
 
+  const decodedToken = jwtHandlers.verify(accesstoken);
+  const userId = decodedToken.id;
   try {
     client = await db.connect(req);
     const invitation = await invitationDB.getInvitationById(client, invitationId);
@@ -30,6 +33,15 @@ module.exports = async (req, res) => {
         isCancled: ${invitation.isCancled}
       `);
       return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, responseMessage.ALREADY_CONFIRM));
+    }
+    const hostId = invitation.hostId;
+    if (hostId != userId) {
+      await send(`
+      req.originalURL: ${req.originalUrl}
+      hostId: ${hostId}
+      userId: ${userId}
+      `);
+      return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, '해당 유저가 보낸 약속이 아닙니다.'));
     }
     const data = await invitationDB.cancleInvitation(client, invitationId);
     if (!data) return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, responseMessage.INVITATION_CANCLE_FAIL));
