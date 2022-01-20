@@ -22,8 +22,8 @@ module.exports = async (req, res) => {
     client = await db.connect(req);
     const decodedToken=jwtHandlers.verify(accesstoken);
     const userId=decodedToken.id;
-    if (!userId) {
-      await send(`userId ${userId}`);
+    if (!userId || !accesstoken) {
+      await send(`userId ${userId}\naccesstoken: ${accesstoken}`);
       return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, responseMessage.NULL_VALUE));
     }
     var alpha=year

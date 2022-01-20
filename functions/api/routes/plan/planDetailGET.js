@@ -11,8 +11,8 @@ module.exports = async (req, res) => {
   //let userId=req.get("id");
   const{accesstoken}=req.headers;
   const { planId } = req.params;
-  if (!planId) {
-    await send(`planId: ${planId}`);
+  if (!planId || !accesstoken) {
+    await send(`planId: ${planId} \naccesstoken: ${accesstoken}`);
     return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, responseMessage.NULL_VALUE));
   }
   let client;

@@ -12,8 +12,8 @@ module.exports = async (req, res) => {
   const{accesstoken}=req.headers;
   const { year, month } = req.params;
 
-  if (!year || !month) {
-    await send(`year: ${year}\nmonth: ${month}\n`);
+  if (!year || !month || !accesstoken) {
+    await send(`year: ${year}\nmonth: ${month}\naccesstoken: ${accesstoken}`);
     return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, responseMessage.NULL_VALUE));
   }
   let client;
