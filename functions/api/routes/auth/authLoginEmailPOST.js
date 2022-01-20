@@ -7,14 +7,18 @@ const jwtHandlers = require("../../../lib/jwtHandlers");
 const { firebaseAuth } = require('../../../config/firebaseClient');
 const { signInWithEmailAndPassword } = require('firebase/auth');
 const { userDB } = require('../../../db');
+const { send } = require('../../../lib/slack');
 
 module.exports = async (req, res) => {
 
 
   const {email, password} = req.body
   
-  // 필요한 값이 없을 때 보내주는 response
-  if (!email || !password) return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, responseMessage.NULL_VALUE));
+  if(!email||!password) {
+    await send(`email : ${email}\npassword : ${password}`);
+    return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST,responseMessage.NULL_VALUE));
+  }
+
   
   let client;
 
@@ -48,8 +52,15 @@ module.exports = async (req, res) => {
         user : {uid : idFirebase},
     }= userFirebase;
     const user = await userDB.getUserByIdFirebase(client,idFirebase);
+    if(!user){
+      await send(`email : ${email}`);
+      return res.status(statusCode.NOT_FOUND).send(statusCode.NOT_FOUND,responseMessage.NULL_VALUE);
+    }
     const {accesstoken} = jwtHandlers.sign(user);
-    
+    if(!accesstoken) {
+      await send(`accesstoken : ${accesstoken}`);
+      return res.status(statusCode.NOT_FOUND).send(statusCode.NOT_FOUND,responseMessage);
+    }
     // 성공적으로 users를 가져왔다면, response를 보내줍니다.
     res.status(statusCode.OK).send(util.success(statusCode.OK, responseMessage.LOGIN_SUCCESS, {user,accesstoken}));
     // try문 안에서 에러가 발생했을 시 catch문으로 error객체가 넘어옵니다.
@@ -58,7 +69,7 @@ module.exports = async (req, res) => {
   } catch (error) {
     functions.logger.error(`[ERROR] [${req.method.toUpperCase()}] ${req.originalUrl}`, `[CONTENT] ${error}`);
     console.log(error);
-    
+    await send(error);
     // 그리고 역시 response 객체를 보내줍니다.
     res.status(statusCode.INTERNAL_SERVER_ERROR).send(util.fail(statusCode.INTERNAL_SERVER_ERROR, responseMessage.INTERNAL_SERVER_ERROR));
     
