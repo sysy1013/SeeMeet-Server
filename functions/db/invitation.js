@@ -370,28 +370,24 @@ const getInvitationReceivedById = async (client, userId, host, invitationId, isR
 
   const newDateRows = converSnakeToCamel.keysToCamel(dateRows);
 
-  if (!isResponse) {
-    return converSnakeToCamel.keysToCamel({ invitation: rows[0], invitationDates: dateRows });
-  } else {
-    for (let row of newDateRows) {
-      let dateId = row.id;
-      const { rows: responseRows } = await client.query(
-        `
+  for (let row of newDateRows) {
+    let dateId = row.id;
+    const { rows: responseRows } = await client.query(
+      `
         SELECT * FROM "invitation_response"
         WHERE invitation_date_id = $1
         AND guest_id = $2
         `,
-        [dateId, userId],
-      );
-      row.date = dayjs(row.date).format('YYYY.MM.DD');
-      if (responseRows.length > 0) {
-        row.isSelected = true;
-      } else {
-        row.isSelected = false;
-      }
+      [dateId, userId],
+    );
+    row.date = dayjs(row.date).format('YYYY.MM.DD');
+    if (responseRows.length > 0) {
+      row.isSelected = true;
+    } else {
+      row.isSelected = false;
     }
-    return converSnakeToCamel.keysToCamel({ invitation: rows[0], invitationDates: newDateRows });
   }
+  return converSnakeToCamel.keysToCamel({ invitation: rows[0], invitationDates: newDateRows });
 };
 
 const getResponseByUserId = async (client, userId, invitationId) => {
