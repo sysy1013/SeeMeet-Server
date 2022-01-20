@@ -8,14 +8,19 @@ const slack = new Slack();
 slack.setWebhook(webhookUri);
 
 const send = async (message) => {
-  slack.webhook(
-    {
-      text: `${message}`,
-    },
-    function (err, response) {
-      console.log(response);
-    },
-  );
+  console.log(process.env.NODE_ENV);
+  if (process.env.NODE_ENV === 'development') {
+    slack.webhook(
+      {
+        text: `${message}`,
+      },
+      function (err, response) {
+        if (err) {
+          console.log(response);
+        }
+      },
+    );
+  } else console.log(message);
 };
 
 module.exports = { send };

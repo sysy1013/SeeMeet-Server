@@ -297,7 +297,7 @@ const getInvitationSentById = async (client, host, guests, invitationId) => {
     `,
     [invitationId],
   );
-
+  console.log(host);
   const newRows = { ...rows[0], host };
   for (let guest of guests) {
     let guestId = guest.id;
@@ -345,7 +345,7 @@ const getInvitationSentById = async (client, host, guests, invitationId) => {
   return converSnakeToCamel.keysToCamel(data);
 };
 
-const getInvitationReceivedById = async (client, userId, invitationId, isResponse) => {
+const getInvitationReceivedById = async (client, userId, host, invitationId, isResponse) => {
   const { rows } = await client.query(
     `
     SELECT * FROM "invitation"
@@ -354,6 +354,8 @@ const getInvitationReceivedById = async (client, userId, invitationId, isRespons
     `,
     [invitationId],
   );
+
+  rows[0].host = host;
   const { rows: dateRows } = await client.query(
     `
     SELECT * FROM "invitation_date"
