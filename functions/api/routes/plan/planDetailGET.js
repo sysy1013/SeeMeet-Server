@@ -19,11 +19,11 @@ module.exports = async (req, res) => {
   
   try {
     client = await db.connect(req);
-    /*
+    
     const decodedToken=jwtHandlers.verify(accesstoken);
     const userId=decodedToken.id;
-    */
-    const plan = await planDB.getDetailPlan(client, planId);
+    
+    const plan = await planDB.getDetailPlan(client, planId, userId);
 
     if (!plan) return res.status(statusCode.NOT_FOUND).send(util.fail(statusCode.NOT_FOUND, responseMessage.NO_POST));
 

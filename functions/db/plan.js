@@ -88,7 +88,7 @@ const getMonthPlan = async (client, userId, year, month) => {
   };
 
 
-const getDetailPlan = async (client,  planId) => {
+const getDetailPlan = async (client, planId, userId) => {
   const { rows } = await client.query(
     `
     SELECT plan.id AS planId, i.id As invitationId, i.invitation_title, i.invitation_desc, date, start, invitation_date.end, u.username AS hostname
@@ -104,12 +104,17 @@ const getDetailPlan = async (client,  planId) => {
       //let id = r.invitationid;
       const { rows: user } = await client.query(
         `
-                SELECT ir.guest_id AS user_id, u.username
-                FROM invitation_response ir, invitation i, "user" u
-                WHERE i.id=ir.invitation_id AND ir.guest_id=u.id
-                AND ir.invitation_id=$1 AND ir.impossible=true
+        SELECT ir.guest_id AS user_id, u.username
+        FROM invitation_response ir, invitation i, "user" u
+        WHERE i.id=ir.invitation_id AND ir.guest_id=u.id
+        AND ir.invitation_id=$1 AND ir.impossible=true
+        EXCEPT
+        SELECT ir.guest_id AS user_id, u.username
+        FROM invitation_response ir, invitation i, "user" u
+        WHERE i.id=ir.invitation_id AND ir.guest_id=u.id
+        AND ir.invitation_id=$1 AND ir.impossible=true AND ir.guest_id=$2
             `,
-        [id],
+        [id, userId],
       );
       rows[0].impossible = user
     //}
@@ -123,8 +128,13 @@ const getDetailPlan = async (client,  planId) => {
         FROM plan_user_connection pu, plan, "user" u
         WHERE plan.id=pu.plan_id AND plan_id=$1
         AND pu.user_id=u.id 
+        EXCEPT
+        SELECT pu.user_id, u.username
+        FROM plan_user_connection pu, plan, "user" u
+        WHERE plan.id=pu.plan_id AND plan_id=$1
+        AND pu.user_id=u.id AND u.id=$2
             `,
-        [planId],
+        [planId, userId],
       );
       rows[0].possible = user2
     
