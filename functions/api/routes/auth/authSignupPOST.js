@@ -8,13 +8,17 @@ const db = require('../../../db/db');
 const jwtHandlers = require('../../../lib/jwtHandlers');
 const { userDB } = require('../../../db');
 const { stubString } = require('lodash');
+const { send } = require('../../../lib/slack');
 
 module.exports = async (req, res) => {
       
   const {email, username,password,passwordConfirm} = req.body
   
   // 필요한 값이 없을 때 보내주는 response
-  if (!email || !username ||!password ||!passwordConfirm) return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, responseMessage.NULL_VALUE));
+  if (!email || !username ||!password ||!passwordConfirm){
+    await send(`email : ${email}\nusername : ${username}`)
+    return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, responseMessage.NULL_VALUE));
+  } 
 
   if(password.length < 8) return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST,responseMessage.PASSWORD_LENGTH_SHORT));
 
@@ -52,8 +56,15 @@ module.exports = async (req, res) => {
     }
     const id_Firebase = userFirebase.uid;
     const user = await userDB.addUser(client, email, username, id_Firebase);
+    if(!user){
+      await send(`email : ${email}, username : ${username}`);
+      return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, responseMessage.NULL_VALUE));
+    }
     const {accesstoken} = jwtHandlers.sign(user);
-
+    if(!accesstoken){
+      await send(`accesstoken : ${accesstoken}`);
+      return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST,responseMessage.NULL_VALUE));
+    }
     
     // 성공적으로 users를 가져왔다면, response를 보내줍니다.
     res.status(statusCode.OK).send(util.success(statusCode.OK, responseMessage.CREATED_USER, {user,accesstoken}));

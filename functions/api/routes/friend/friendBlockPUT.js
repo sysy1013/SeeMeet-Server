@@ -5,15 +5,22 @@ const responseMessage = require('../../../constants/responseMessage');
 const db = require('../../../db/db');
 const { friendDB } = require('../../../db');
 const jwtHandlers = require('../../../lib/jwtHandlers');
+const { send } = require('../../../lib/slack');
 module.exports = async (req, res) => {
 
     const{accesstoken}=req.headers;
     const {email} = req.body;
   
   // 필요한 값이 없을 때 보내주는 response
-  if (!email) return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, responseMessage.NULL_VALUE));
+  if (!email) {
+    await send(`email : ${email}`);
+    return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, responseMessage.NULL_VALUE));
+  }
   if (!accesstoken) return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, responseMessage.NULL_VALUE));
-  
+  if(!accesstoken){
+    await send(`accesstoken : ${accesstoken}`);
+    return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, responseMessage.NULL_VALUE));
+  }
   let client;
   
   
@@ -24,13 +31,24 @@ module.exports = async (req, res) => {
     client = await db.connect(req);
     const decodedToken=jwtHandlers.verify(accesstoken);
     const userId=decodedToken.id;
-    if(!userId) return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST,responseMessage.NO_USER));
+    if(!userId) {
+      await send(`userId : ${userId}`);
+      return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST,responseMessage.NO_USER));
+    }
     const receiverId = await friendDB.findreceiver(client,email);
+    if(!receiverId){
+      await send(`email : ${email}`);
+      return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, responseMessage.NULL_VALUE));
+    }
     const rId = receiverId[Object.keys(receiverId)[0]]
     if(rId === null || !rId) return res.status(statusCode.NOT_FOUND).send(util.fail(statusCode.NOT_FOUND,responseMessage.NO_USER));
 
     // 빌려온 connection을 사용해 우리가 db/[파일].js에서 미리 정의한 SQL 쿼리문을 날려줍니다.
     const block = await friendDB.blockFriend(client,userId,rId);
+    if(!block){
+      await send(`userId : ${userId}, receiverId : ${receiverId}`);
+      return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, responseMessage.NULL_VALUE));
+    }
     // 성공적으로 users를 가져왔다면, response를 보내줍니다.
     res.status(statusCode.OK).send(util.success(statusCode.OK, responseMessage.READ_ALL_USERS_SUCCESS, block));
     
