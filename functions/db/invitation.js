@@ -536,6 +536,21 @@ const getInvitationByDateId = async (client, dateId, invitationId) => {
   return converSnakeToCamel.keysToCamel(rows[0]);
 };
 
+const getInvitationDateByInvitationId = async (client, invitationId) => {
+  const { rows } = await client.query(
+    `
+    SELECT id FROM invitation_date
+    WHERE invitation_id = $1
+    `,
+    [invitationId],
+  );
+
+  const dateIds = rows.map(function (value) {
+    return value['id'];
+  });
+  return converSnakeToCamel.keysToCamel(dateIds);
+};
+
 module.exports = {
   getAllInvitation,
   createInvitation,
@@ -550,4 +565,5 @@ module.exports = {
   cancleInvitation,
   getInvitationById,
   getInvitationByDateId,
+  getInvitationDateByInvitationId,
 };

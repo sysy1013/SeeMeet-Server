@@ -35,6 +35,7 @@ module.exports = async (req, res) => {
       `);
       return res.status(statusCode.NOT_FOUND).send(util.fail(statusCode.NOT_FOUND, responseMessage.NO_INVITATION));
     }
+
     if (invitation.isConfirmed || invitation.isCancled) {
       await send(`
       req.originalURL: ${req.originalUrl}
@@ -43,6 +44,35 @@ module.exports = async (req, res) => {
     `);
       return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, responseMessage.ALREADY_CONFIRM));
     }
+    const guests = await invitationDB.getGuestByInvitationId(client, invitationId);
+
+    const guestIds = guests.map(function (value) {
+      return value['id'];
+    });
+
+    if (!guestIds.includes(userId)) {
+      await send(`
+      req.originalURL: ${req.originalUrl}
+      guestsIds: ${guestIds}
+      userId: ${userId}
+      `);
+      return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, '해당 약속에 포함된 게스트가 아닙니다.'));
+    }
+
+    const realDateIds = await invitationDB.getInvitationDateByInvitationId(client, invitationId);
+
+    for (let dateId of invitationDateIds) {
+      if (realDateIds.includes(dateId)) {
+        console.log('success');
+      } else {
+        await send(`
+        req.originalURL: ${req.originalUrl}
+        DateChoice: ${JSON.stringify(realDateIds)}
+        `);
+        return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, '해당 날짜가 존재하지 않습니다.'));
+      }
+    }
+
     const data = await invitationResponseDB.responseInvitation(client, userId, invitationId, invitationDateIds);
     if (!data) return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, responseMessage.INVITATION_RESPONSE_FAIL));
     res.status(statusCode.OK).send(util.success(statusCode.OK, responseMessage.INVITATION_RESPONSE_SUCCESS, data));
