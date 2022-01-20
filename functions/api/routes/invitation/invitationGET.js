@@ -21,6 +21,7 @@ module.exports = async (req, res) => {
     client = await db.connect(req);
 
     const host = await invitationDB.getHostByInvitationId(client, invitationId);
+
     if (!host) return res.status(statusCode.NOT_FOUND).send(util.fail(statusCode.NOT_FOUND, responseMessage.NO_INVITATION));
     const guests = await invitationDB.getGuestByInvitationId(client, invitationId);
     if (host.id == userId) {
@@ -33,7 +34,7 @@ module.exports = async (req, res) => {
       if (response.length > 0) {
         isResponse = true;
       }
-      const data = await invitationDB.getInvitationReceivedById(client, userId, invitationId, isResponse);
+      const data = await invitationDB.getInvitationReceivedById(client, userId, host, invitationId, isResponse);
       if (!data) return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, responseMessage.READ_INVITATION_FAIL));
       res.status(statusCode.OK).send(util.success(statusCode.OK, responseMessage.READ_ALL_USERS_SUCCESS, { isResponse, ...data, guests }));
     }
