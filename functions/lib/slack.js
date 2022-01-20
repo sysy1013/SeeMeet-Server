@@ -13,7 +13,9 @@ const send = async (message) => {
       text: `${message}`,
     },
     function (err, response) {
-      console.log(response);
+      if (err) {
+        console.log(response);
+      }
     },
   );
 };
