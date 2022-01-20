@@ -5,12 +5,16 @@ const responseMessage = require('../../../constants/responseMessage');
 const db = require('../../../db/db');
 const { planDB } = require('../../../db');
 const jwtHandlers=require('../../../lib/jwtHandlers');
+const { send } = require('../../../lib/slack');
+
 module.exports = async (req, res) => {
   //let userId=req.get("id");
   const{accesstoken}=req.headers;
   const { year, month } = req.params;
-  if (!year || !month) return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, responseMessage.NULL_VALUE));
-
+  if (!year || !month || !accesstoken) {
+    await send(`year: ${year}\nmonth: ${month}\naccesstoken: ${accesstoken}\n`);
+  return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, responseMessage.NULL_VALUE));
+  }
   let client;
   
   try {
@@ -35,8 +39,9 @@ module.exports = async (req, res) => {
         ...plan2,
     
       ];
-    if (!plan) return res.status(statusCode.NOT_FOUND).send(util.fail(statusCode.NOT_FOUND, responseMessage.NO_POST));
-    
+    if (!plan) {
+    return res.status(statusCode.NOT_FOUND).send(util.fail(statusCode.NOT_FOUND, responseMessage.NO_POST));
+    }
     res.status(statusCode.OK).send(util.success(statusCode.OK, responseMessage.READ_ONE_POST_SUCCESS, data));
   } catch (error) {
     functions.logger.error(`[ERROR] [${req.method.toUpperCase()}] ${req.originalUrl}`, `[CONTENT] ${error}`);

@@ -6,12 +6,16 @@ const db = require('../../../db/db');
 const jwtHandlers=require('../../../lib/jwtHandlers');
 const { friendDB, userDB } = require('../../../db');
 const { forEach } = require('lodash');
+const { send } = require('../../../lib/slack');
 
 module.exports = async (req, res) => {
 
     const{accesstoken}=req.headers;
   // 필요한 값이 없을 때 보내주는 response
-  if (!accesstoken) return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, responseMessage.NULL_VALUE));
+  if (!accesstoken){
+    await send(`accesstoken : ${accesstoken}`);
+    return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, responseMessage.NULL_VALUE));
+  } 
   
   let client;
   
@@ -22,10 +26,24 @@ module.exports = async (req, res) => {
     client = await db.connect(req);
     const decodedToken=jwtHandlers.verify(accesstoken);
     const userId=decodedToken.id;
+    if(!userId){
+      await send(`userId : ${userId}`);
+      return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST,responseMessage.NO_USER));
+    }
     // 빌려온 connection을 사용해 우리가 db/[파일].js에서 미리 정의한 SQL 쿼리문을 날려줍니다.
     const friendList = await friendDB.getALLFriendById(client,userId);
+    if(!friendList){
+      await send(`userId : ${userId}`);
+      return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST,responseMessage.NO_USER));
+    }
+    const checknull = friendList=='';
+    if(checknull==true) return res.status(statusCode.OK).send(util.success(statusCode.OK,responseMessage.READ_USER_SUCCESS,[]));
     const rId = [...new Set(friendList.filter(Boolean).map((o)=>o.receiver))];
     const friendinfo = await userDB.getUserinfoByuserIds(client,rId);
+    if(!friendinfo){
+      await send(`receiverId : ${rId}`);
+      return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST,responseMessage.NO_USER));
+    }
     
     // 성공적으로 users를 가져왔다면, response를 보내줍니다.
     res.status(statusCode.OK).send(util.success(statusCode.OK, responseMessage.READ_USER_SUCCESS, friendinfo));
@@ -36,7 +54,7 @@ module.exports = async (req, res) => {
   } catch (error) {
     functions.logger.error(`[ERROR] [${req.method.toUpperCase()}] ${req.originalUrl}`, `[CONTENT] ${error}`);
     console.log(error);
-    
+    await send(error);
     // 그리고 역시 response 객체를 보내줍니다.
     res.status(statusCode.INTERNAL_SERVER_ERROR).send(util.fail(statusCode.INTERNAL_SERVER_ERROR, responseMessage.INTERNAL_SERVER_ERROR));
     

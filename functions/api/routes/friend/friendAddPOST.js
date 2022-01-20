@@ -5,6 +5,7 @@ const responseMessage = require('../../../constants/responseMessage');
 const db = require('../../../db/db');
 const jwtHandlers = require('../../../lib/jwtHandlers');
 const { friendDB, userDB } = require('../../../db');
+const { send } = require('../../../lib/slack');
 
 module.exports = async (req, res) => {
 
@@ -14,8 +15,10 @@ module.exports = async (req, res) => {
     if (!accesstoken) return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, responseMessage.NULL_VALUE));
 
   // 필요한 값이 없을 때 보내주는 response
-    if (!email) return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, responseMessage.NULL_VALUE));
-
+    if (!email) {
+      await send(`email : ${email}`);
+      return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, responseMessage.NULL_VALUE));
+    }
     let client;
   // 에러 트래킹을 위해 try / catch문을 사용합니다.
   // try문 안에서 우리의 로직을 실행합니다.
@@ -23,16 +26,47 @@ module.exports = async (req, res) => {
     client = await db.connect(req);
     const decodedToken=jwtHandlers.verify(accesstoken);
     const userId=decodedToken.id;
-
+    if(!userId){
+      await send(`userId : ${userId}`)
+      return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST,responseMessage.NO_USER));
+    } 
     const receiverId = await friendDB.findreceiver(client,email);
-    if(!receiverId) return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST,responseMessage.NO_USER));
-   
+
+    if(!receiverId){
+      await send(`receiverId : ${receiverId}`)
+      return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST,responseMessage.NO_USER));
+    } 
+    
     const rId = receiverId[Object.keys(receiverId)[0]]
     if(userId == rId) return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST,responseMessage.FAIL_ADD_MYSELF));
 
+    const checkFriends = await friendDB.getALLFriendById(client,userId);
+    if(!checkFriends){
+      await send(`userId : ${userId}`);
+      return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST,responseMessage.NO_USER));
+    }
+    const checks = [...new Set(checkFriends.filter(Boolean).map((o)=>o.receiver))];
+
+    for(let i =0; i< checks.length; i++){
+      if(checks[i]==rId) return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST,responseMessage.EXISTS_FRIEND));
+    }
+
+    //foreach filter map 다 사용해봤는데, 에러남-> 에러나는 이유! 옆과 같은것들은 iteration을 종료시키고 다음을 실행하기에 response가 두개가 되어서 오류가남 
+    //그렇기에 하나하나 비교할땐 위처럼 for문을 사용하는게 좋다!
+    
+    // checks.forEach(x=>{
+    //   if(x==rId) 
+    //   return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST,responseMessage.EXISTS_FRIEND));
+    // })
+    
+
+
     // 빌려온 connection을 사용해 우리가 db/[파일].js에서 미리 정의한 SQL 쿼리문을 날려줍니다.
     const addFriend = await friendDB.requestAddFriend(client,userId,rId);
-    if (!addFriend) return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST,responseMessage.FAIL_ADD_FRIEND)) 
+    if (!addFriend){
+      await send(`userId : ${userId}, receiverId : ${rId}`)
+      return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST,responseMessage.FAIL_ADD_FRIEND)); 
+    } 
     // 성공적으로 users를 가져왔다면, response를 보내줍니다.
     res.status(statusCode.OK).send(util.success(statusCode.OK, responseMessage.SUCCESS_ADD_FRIEND, addFriend));
     
@@ -42,7 +76,7 @@ module.exports = async (req, res) => {
   } catch (error) {
     functions.logger.error(`[ERROR] [${req.method.toUpperCase()}] ${req.originalUrl}`, `[CONTENT] ${error}`);
     console.log(error);
-    
+    await send(error);
     // 그리고 역시 response 객체를 보내줍니다.
     res.status(statusCode.INTERNAL_SERVER_ERROR).send(util.fail(statusCode.INTERNAL_SERVER_ERROR, responseMessage.INTERNAL_SERVER_ERROR));
     

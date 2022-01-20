@@ -17,7 +17,7 @@ const getMonthPlan = async (client, userId, year, month) => {
   
     for (let r of rows) {
       //   console.log(r);
-      let id = r.id;
+      let id = r.plan_id;
       const { rows: user } = await client.query(
         `
                 SELECT pu.user_id, u.username
@@ -88,12 +88,12 @@ const getMonthPlan = async (client, userId, year, month) => {
   };
 
 
-const getDetailPlan = async (client,  planId) => {
+const getDetailPlan = async (client, planId, userId) => {
   const { rows } = await client.query(
     `
-    SELECT plan.id AS planId, i.id As invitationId, i.invitation_title, i.invitation_desc, date, start, invitation_date.end, i.host_id
-    FROM plan, invitation_date, invitation i
-    WHERE plan.invitation_date_id=invitation_date.id AND i.id=invitation_date.invitation_id
+    SELECT plan.id AS planId, i.id As invitationId, i.invitation_title, i.invitation_desc, date, start, invitation_date.end, u.username AS hostname
+    FROM plan, invitation_date, invitation i, "user" u
+    WHERE plan.invitation_date_id=invitation_date.id AND i.id=invitation_date.invitation_id AND i.host_id=u.id
     AND plan.id=$1
     `,
     [planId],
@@ -104,12 +104,17 @@ const getDetailPlan = async (client,  planId) => {
       //let id = r.invitationid;
       const { rows: user } = await client.query(
         `
-                SELECT ir.guest_id AS user_id, u.username
-                FROM invitation_response ir, invitation i, "user" u
-                WHERE i.id=ir.invitation_id AND ir.guest_id=u.id
-                AND ir.invitation_id=$1 AND ir.impossible=true
+        SELECT ir.guest_id AS user_id, u.username
+        FROM invitation_response ir, invitation i, "user" u
+        WHERE i.id=ir.invitation_id AND ir.guest_id=u.id
+        AND ir.invitation_id=$1 AND ir.impossible=true
+        EXCEPT
+        SELECT ir.guest_id AS user_id, u.username
+        FROM invitation_response ir, invitation i, "user" u
+        WHERE i.id=ir.invitation_id AND ir.guest_id=u.id
+        AND ir.invitation_id=$1 AND ir.impossible=true AND ir.guest_id=$2
             `,
-        [id],
+        [id, userId],
       );
       rows[0].impossible = user
     //}
@@ -123,8 +128,13 @@ const getDetailPlan = async (client,  planId) => {
         FROM plan_user_connection pu, plan, "user" u
         WHERE plan.id=pu.plan_id AND plan_id=$1
         AND pu.user_id=u.id 
+        EXCEPT
+        SELECT pu.user_id, u.username
+        FROM plan_user_connection pu, plan, "user" u
+        WHERE plan.id=pu.plan_id AND plan_id=$1
+        AND pu.user_id=u.id AND u.id=$2
             `,
-        [planId],
+        [planId, userId],
       );
       rows[0].possible = user2
     
@@ -191,13 +201,12 @@ const getLastPlan = async (client, userId, date) => {
   );
 
   if(rows.length==0){
-    return convertSnakeToCamel.keysToCamel(rows);
+    return {};
   }
 
   for(let r of rows){
     r.date=dayjs(r.date).format('YYYY-MM-DD')
   }
-
   return convertSnakeToCamel.keysToCamel(rows[rows.length-1]);
 };
 

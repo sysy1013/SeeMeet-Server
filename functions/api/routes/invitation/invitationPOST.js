@@ -5,14 +5,38 @@ const responseMessage = require('../../../constants/responseMessage');
 const db = require('../../../db/db');
 const { invitationDB } = require('../../../db');
 const jwtHandlers = require('../../../lib/jwtHandlers');
+const { send } = require('../../../lib/slack');
 
 module.exports = async (req, res) => {
   const { accesstoken } = req.headers;
   const { guests, invitationTitle, invitationDesc, date, start, end } = req.body;
 
-  if (!guests || !invitationTitle || !invitationDesc || !date || !start || !end) return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, responseMessage.NULL_VALUE));
-  if (!(date.length == start.length) && !(date.length == end.length)) return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, responseMessage.NULL_VALUE));
+  if (!guests || !invitationTitle || !invitationDesc || !date || !start || !end || !accesstoken) {
+    if (process.env.DEV_NODE === 'develop') {
+      await send(
+        `req.originalURL: ${req.originalUrl}
+      guests: ${JSON.stringify(guests)},
+      invitationTitle: ${invitationTitle},
+      invitationDesc: ${invitationDesc},
+      date: ${date},
+      start: ${start},
+      end: ${end},
+      accesstoken: ${accesstoken}
+        `,
+      );
+    }
+    return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, responseMessage.NULL_VALUE));
+  }
+  if (!(date.length == start.length) && !(date.length == end.length)) {
+    await send(`
+      req.originalURL: ${req.originalUrl},
+      date.length: ${date.length},
+      start.length: ${start.length},
+      end.length: ${end.length}
+      `);
 
+    return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, responseMessage.NULL_VALUE));
+  }
   let client;
 
   try {
@@ -21,7 +45,16 @@ module.exports = async (req, res) => {
     const decodedToken = jwtHandlers.verify(accesstoken);
     const userId = decodedToken.id;
 
-    if (!userId) return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, responseMessage.NULL_VALUE));
+    if (!userId) {
+      await send(
+        `
+          req.originalURL: ${req.originalUrl}
+          userId: ${userId}
+          `,
+      );
+
+      return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, responseMessage.NULL_VALUE));
+    }
 
     const invitation = await invitationDB.createInvitation(client, userId, invitationTitle, invitationDesc);
     const invitationId = invitation.id;
@@ -34,6 +67,7 @@ module.exports = async (req, res) => {
   } catch (error) {
     functions.logger.error(`[ERROR] [${req.method.toUpperCase()}] ${req.originalUrl}`, `[CONTENT] ${error}`);
     console.log(error);
+    await send(error);
 
     res.status(statusCode.INTERNAL_SERVER_ERROR).send(util.fail(statusCode.INTERNAL_SERVER_ERROR, responseMessage.INTERNAL_SERVER_ERROR));
   } finally {

@@ -5,21 +5,25 @@ const responseMessage = require('../../../constants/responseMessage');
 const db = require('../../../db/db');
 const { planDB } = require('../../../db');
 const jwtHandlers=require('../../../lib/jwtHandlers');
+const { send } = require('../../../lib/slack');
+
 module.exports = async (req, res) => {
   //let userId=req.get("id");
   const{accesstoken}=req.headers;
   const { planId } = req.params;
-  if (!planId) return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, responseMessage.NULL_VALUE));
-
+  if (!planId || !accesstoken) {
+    await send(`planId: ${planId} \naccesstoken: ${accesstoken}`);
+    return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, responseMessage.NULL_VALUE));
+  }
   let client;
   
   try {
     client = await db.connect(req);
-    /*
+    
     const decodedToken=jwtHandlers.verify(accesstoken);
     const userId=decodedToken.id;
-    */
-    const plan = await planDB.getDetailPlan(client, planId);
+    
+    const plan = await planDB.getDetailPlan(client, planId, userId);
 
     if (!plan) return res.status(statusCode.NOT_FOUND).send(util.fail(statusCode.NOT_FOUND, responseMessage.NO_POST));
 
