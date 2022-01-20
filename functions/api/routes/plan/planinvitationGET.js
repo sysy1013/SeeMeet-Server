@@ -5,20 +5,27 @@ const responseMessage = require('../../../constants/responseMessage');
 const db = require('../../../db/db');
 const { planDB } = require('../../../db');
 const jwtHandlers=require('../../../lib/jwtHandlers');
+const { send } = require('../../../lib/slack');
+
 module.exports = async (req, res) => {
   //let userId=req.get("id");
   const{accesstoken}=req.headers;
   const { year, month } = req.params;
   
-  if (!year || !month) return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, responseMessage.NULL_VALUE));
+  if (!year || !month) {
+    await send(`year: ${year}\nmonth: ${month}\n`);
+  return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, responseMessage.NULL_VALUE));
+  }
   let client;
   
   try {
     client = await db.connect(req);
     const decodedToken=jwtHandlers.verify(accesstoken);
     const userId=decodedToken.id;
-    if (!userId) return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, responseMessage.NULL_VALUE));
-
+    if (!userId) {
+      await send(`userId ${userId}`);
+      return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, responseMessage.NULL_VALUE));
+    }
     var alpha=year
     var beta=parseInt(month)-1
 

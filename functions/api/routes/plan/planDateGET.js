@@ -5,12 +5,16 @@ const responseMessage = require('../../../constants/responseMessage');
 const db = require('../../../db/db');
 const { planDB } = require('../../../db');
 const jwtHandlers=require('../../../lib/jwtHandlers');
+const { send } = require('../../../lib/slack');
+
 module.exports = async (req, res) => {
   //let userId=req.get("id");
   const{accesstoken}=req.headers;
   const { dateId } = req.params;
-  if (!dateId) return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, responseMessage.NULL_VALUE));
-
+  if (!dateId) {
+    await send(`dateId: ${dateId}`);
+    return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, responseMessage.NULL_VALUE));
+  }
   let client;
   
   try {
