@@ -40,9 +40,9 @@ module.exports = async (req, res) => {
         if(userFirebase.error.code === 'auth/user-not-found'){
             return res.status(statusCode.NOT_FOUND).json(util.fail(statusCode.NOT_FOUND,responseMessage.NO_USER));
         } else if(userFirebase.error.code === ' auth/invalid-email'){
-            return res.status(statusCode.NOT_ACCESS).json(util.fail(statusCode.NOT_ACCESS,responseMessage.INVALID_EMAIL));
+            return res.status(statusCode.NOT_FOUND).json(util.fail(statusCode.NOT_FOUND,responseMessage.INVALID_EMAIL));
         }else if(userFirebase.error.code === 'auth/wrong-password'){
-            return res.status(statusCode.FORBIDDEN).json(util.fail(statusCode.FORBIDDEN,responseMessage.MISS_MATCH_PW));
+            return res.status(statusCode.NOT_FOUND).json(util.fail(statusCode.NOT_FOUND,responseMessage.MISS_MATCH_PW));
         }else{
             return res.status(statusCode.INTERNAL_SERVER_ERROR).json(util.fail(statusCode.INTERNAL_SERVER_ERROR,responseMessage.INTERNAL_SERVER_ERROR));
         }
