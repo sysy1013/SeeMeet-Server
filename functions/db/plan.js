@@ -91,9 +91,9 @@ const getMonthPlan = async (client, userId, year, month) => {
 const getDetailPlan = async (client,  planId) => {
   const { rows } = await client.query(
     `
-    SELECT plan.id AS planId, i.id As invitationId, i.invitation_title, i.invitation_desc, date, start, invitation_date.end, i.host_id
-    FROM plan, invitation_date, invitation i
-    WHERE plan.invitation_date_id=invitation_date.id AND i.id=invitation_date.invitation_id
+    SELECT plan.id AS planId, i.id As invitationId, i.invitation_title, i.invitation_desc, date, start, invitation_date.end, u.username AS hostname
+    FROM plan, invitation_date, invitation i, "user" u
+    WHERE plan.invitation_date_id=invitation_date.id AND i.id=invitation_date.invitation_id AND i.host_id=u.id
     AND plan.id=$1
     `,
     [planId],
