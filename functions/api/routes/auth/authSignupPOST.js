@@ -10,8 +10,7 @@ const { userDB } = require('../../../db');
 const { stubString } = require('lodash');
 
 module.exports = async (req, res) => {
-
-
+      
   const {email, username,password,passwordConfirm} = req.body
   
   // 필요한 값이 없을 때 보내주는 response
@@ -19,7 +18,7 @@ module.exports = async (req, res) => {
 
   if(password.length < 8) return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST,responseMessage.PASSWORD_LENGTH_SHORT));
 
-  if(password != passwordConfirm) return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST,responseMessage.PASSWORD_IS_NOT_CORRECT))
+  if(password != passwordConfirm) return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST,responseMessage.PASSWORD_IS_NOT_CORRECT));
 
   
   let client;
@@ -62,7 +61,7 @@ module.exports = async (req, res) => {
     // try문 안에서 에러가 발생했을 시 catch문으로 error객체가 넘어옵니다.
     // 이 error 객체를 콘솔에 찍어서 어디에 문제가 있는지 알아냅니다.
     // 이 때 단순히 console.log만 해주는 것이 아니라, Firebase 콘솔에서도 에러를 모아볼 수 있게 functions.logger.error도 함께 찍어줍니다.
-  } catch (error) {
+  } catch (error) { 
     functions.logger.error(`[ERROR] [${req.method.toUpperCase()}] ${req.originalUrl}`, `[CONTENT] ${error}`);
     console.log(error);
     

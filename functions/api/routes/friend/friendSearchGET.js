@@ -30,10 +30,10 @@ module.exports = async (req, res) => {
     if(!searchUser) return res.status(statusCode.NOT_FOUND).send(util.fail(statusCode.NOT_FOUND,responseMessage.NO_USER))
     const id =searchUser[Object.keys(searchUser)[0]];
     
-    if(userId == id) return res.status(statusCode.BAD_REQUEST).send(util.success(statusCode.BAD_REQUEST,'나 자신은 조회 불가',[]));
+    if(userId == id) return res.status(statusCode.BAD_REQUEST).send(util.success(statusCode.BAD_REQUEST,'나 자신은 조회 불가',{}));
     const checkFriend = await friendDB.existFriend(client,id,userId);
     console.log(checkFriend);
-    if(checkFriend) return res.status(statusCode.BAD_REQUEST).send(util.success(statusCode.BAD_REQUEST,responseMessage.EXISTS_FRIEND,[]));
+    if(checkFriend) return res.status(statusCode.BAD_REQUEST).send(util.success(statusCode.BAD_REQUEST,responseMessage.EXISTS_FRIEND,{}));
  
     // 성공적으로 users를 가져왔다면, response를 보내줍니다.
     res.status(statusCode.OK).send(util.success(statusCode.OK, responseMessage.READ_USER_SUCCESS, searchUser));
