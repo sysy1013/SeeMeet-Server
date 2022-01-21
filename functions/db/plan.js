@@ -98,7 +98,7 @@ const getDetailPlan = async (client, planId, userId) => {
     `,
     [planId],
   );
-    console.log(rows)
+ 
     if(rows.length == 0) {
       return null
     }
