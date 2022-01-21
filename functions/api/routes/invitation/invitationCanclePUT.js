@@ -22,10 +22,17 @@ module.exports = async (req, res) => {
 
   const decodedToken = jwtHandlers.verify(accesstoken);
   const userId = decodedToken.id;
+
   try {
     client = await db.connect(req);
     const invitation = await invitationDB.getInvitationById(client, invitationId);
-    if (!invitation) return res.status(statusCode.NOT_FOUND).send(util.fail(statusCode.NOT_FOUND, responseMessage.NO_INVITATION));
+    if (!invitation) {
+      await send(`
+      req.originalURL: ${req.originalUrl}
+      invitationId: ${invitationId}
+      `);
+      return res.status(statusCode.NOT_FOUND).send(util.fail(statusCode.NOT_FOUND, responseMessage.NO_INVITATION));
+    }
     if (invitation.isConfirmed || invitation.isCancled) {
       await send(`
         req.originalURL: ${req.originalUrl}
@@ -34,11 +41,11 @@ module.exports = async (req, res) => {
       `);
       return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, responseMessage.ALREADY_CONFIRM));
     }
-    const hostId = invitation.hostId;
-    if (hostId != userId) {
+    const host = await invitationDB.getHostByInvitationId(client, invitationId);
+    if (host.id != userId) {
       await send(`
       req.originalURL: ${req.originalUrl}
-      hostId: ${hostId}
+      hostId: ${host.id}
       userId: ${userId}
       `);
       return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, '해당 유저가 보낸 약속이 아닙니다.'));
