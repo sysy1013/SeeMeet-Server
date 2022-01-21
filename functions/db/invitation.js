@@ -70,6 +70,8 @@ const getAllInvitation = async (client, userId) => {
     }
     row.guests = values;
     row.isReceived = false;
+    // 객체 동일을 위해 추가 의미x
+    row.isResponse = false;
   }
 
   for (let row of guestInvitationRows) {
@@ -95,7 +97,7 @@ const getAllInvitation = async (client, userId) => {
     );
     console.log('-----------------' + responseRows);
     if (responseRows.length > 0) {
-      row.isRespose = true;
+      row.isResponse = true;
     } else {
       row.isResponse = false;
     }
