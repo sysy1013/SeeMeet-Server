@@ -98,7 +98,10 @@ const getDetailPlan = async (client, planId, userId) => {
     `,
     [planId],
   );
-    //for (let r of rows) {
+    console.log(rows)
+    if(rows.length == 0) {
+      return null
+    }
       const id=Object.values(rows[0])[1]
     
       //let id = r.invitationid;
