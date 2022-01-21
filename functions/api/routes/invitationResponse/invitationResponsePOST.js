@@ -11,7 +11,7 @@ module.exports = async (req, res) => {
   const { invitationId } = req.params;
   const { invitationDateIds } = req.body;
   const { accesstoken } = req.headers;
-  if (!invitationId || !invitationDateIds || !accesstoken) {
+  if (!invitationId || invitationDateIds.length == 0 || !accesstoken) {
     await send(`
     req.originalURL: ${req.originalUrl}
     invitationId: ${invitationId}
