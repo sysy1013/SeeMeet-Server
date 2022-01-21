@@ -23,11 +23,8 @@ module.exports = async (req, res) => {
     const userId=decodedToken.id;
     if (!userId) return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, responseMessage.NULL_VALUE));
     const plan = await planDB.getDatePlan(client, userId, parseInt(dateId));
-    
-    if(plan.length == 0) {
-      return res.status(statusCode.NOT_FOUND).send(util.fail(statusCode.NOT_FOUND, responseMessage.NO_POST));
-    }
    
+    if (!plan) return res.status(statusCode.NOT_FOUND).send(util.fail(statusCode.NOT_FOUND, responseMessage.NO_POST));
     
     res.status(statusCode.OK).send(util.success(statusCode.OK, responseMessage.READ_ONE_POST_SUCCESS, plan));
   } catch (error) {

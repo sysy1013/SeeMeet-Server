@@ -159,6 +159,9 @@ const getDatePlan = async (client, userId, dateId) => {
     `,
     [dateId],
   );
+  if(dateRow.length == 0) {
+    return null
+  }
   const date=Object.values(dateRow[0])[0]
 
   const { rows } = await client.query(
