@@ -84,6 +84,21 @@ const getAllInvitation = async (client, userId) => {
     row.host = hostRows[0];
     delete row.host_id;
     row.isReceived = true;
+
+    const { rows: responseRows } = await client.query(
+      `
+      SELECT * FROM "invitation_response"
+      WHERE guest_id = $1
+      AND invitation_id = $2
+      `,
+      [userId, row.id],
+    );
+    console.log('-----------------' + responseRows);
+    if (responseRows.length > 0) {
+      row.isRespose = true;
+    } else {
+      row.isResponse = false;
+    }
   }
 
   const newRows = _.union(rows, guestInvitationRows);
