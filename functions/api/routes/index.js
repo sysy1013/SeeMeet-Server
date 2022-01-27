@@ -1,7 +1,11 @@
 const express = require('express');
 const router = express.Router();
 
-// '/user' 이하의 경로로 들어온 요청은 모두 user 폴더 안에서 처리
-router.use('/user', require('./user'));
+router.use('/plan', require('./plan'));
+router.use('/invitation', require('./invitation'));
+router.use('/invitation-response', require('./invitationResponse'));
+router.use('/friend', require('./friend'));
+router.use('/auth', require('./auth'));
+router.use('/user',require('./user'));
 
 module.exports = router;
